@@ -24,13 +24,6 @@ import { Sheetvolume } from "../sheetvolumes/sheetvolumes.model";
 import { createVolumeMapTrue } from "../utils/archivesfunctions"
 
 
-
-
-
-
-
-
-
 class ArchivesRouter extends ModelRouter<Archive> {
   constructor() {
     super(Archive);
@@ -85,10 +78,7 @@ class ArchivesRouter extends ModelRouter<Archive> {
      let locationTitle = headers[0]     
      let indices= [headers.toString().split(",")].pop()
      let coluns = indices.slice(1)
-     let colunLocation = indices.shift().toString()
-
-
-    
+     let colunLocation = indices.shift().toString()   
 
 let idVo = ""
     
@@ -100,9 +90,6 @@ let idVo = ""
    
 
 let vid  = (await Volume.find({location:xlData[i][colunLocation]})).map(el=>{return el._id}).toString()
-
-
-
 
 console.log("só uma vez")
 
@@ -174,25 +161,7 @@ console.log("criando")
         // console.log(arr.length)
         bufferFrom(arr, 'uft8')
         // console.log(bufferFrom(arr, 'uft8'))
-      }
-   
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    
+      }   
     
 
      resp.send({
@@ -201,17 +170,8 @@ console.log("criando")
       })
 
 
+
     // quantidades de colunas desconiderar a pmeiro sempre -1
-
-
-
-
-
-
-
-
-
-
   }
 
 

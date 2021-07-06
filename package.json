@@ -9,7 +9,6 @@
     "devqueue": "nodemon ./dist/queues/receiver.js",
     "devapi": "nodemon ./dist/main.js",
     "test": "ts-node jest.startup.ts",
-
     "prodqueue": "node ./queues/receiver.js",
     "prodapi": "node ./main.js",
     "start": " pm2 start prodqueue  & npm run prodapi "
