@@ -2,7 +2,7 @@
 import { Server } from './server/server'
 
 import { volumesRouter } from './volumes/volumes.router'
-import { archivesRouter } from './archives/archives.rouber'
+import { archivesRouter } from './archives/archives.router'
 import { notifierRouter } from './notifiers/notifiers.router'
 import { mainRouter } from './main.router'
 import {sheetarchivesRouter} from './sheetarchives/sheetarchives.router'
