@@ -93,51 +93,48 @@ class ArchivesRouter extends ModelRouter<Archive> {
 
     let idVo = ""
 
+    if (checkStore === true) {
 
-    for (let i = 0; xlData.length > i; i++) {
+      for (let i = 0; xlData.length > i; i++) {
 
-      let controlPos = await Position.find({ storehouse: storehouse, position: { $eq: xlData[i][colunLocation] } })
-      let idPosition = await controlPos.map(el => { return el._id }).toString()
-      let checkPosition = await controlPos.map(el => { return el.used }).toString()
-
-
-
-      let vid = (await Volume.find({
-        location: xlData[i][colunLocation],
-        storehouse: storehouse,
-        company: company,
-        departament: departament,
-        volumeType: "BOX",
-        guardType: "GERENCIADA",
-        status: "ATIVO",
-      })).map(el => { return el._id }).toString()
+        let controlPos = await Position.find({ storehouse: storehouse, position: { $eq: xlData[i][colunLocation] } })
+        let idPosition = await controlPos.map(el => { return el._id }).toString()
+        let checkPosition = await controlPos.map(el => { return el.used }).toString()
 
 
-      console.log("só uma vez")
-
-      if (vid) {
-        console.log("sem criar")
-        idVo = vid
-
-      } else {
-        let documentVol = new Volume({
+        let vid = (await Volume.find({
           location: xlData[i][colunLocation],
+          storehouse: storehouse,
+          company: company,
+          departament: departament,
           volumeType: "BOX",
           guardType: "GERENCIADA",
           status: "ATIVO",
-          storehouse: req.body.storehouse,
-          uniqueField: `${xlData[i][colunLocation]}-${storehouse}`,
-          company: company,
-          departament: departament,
-          author: req.authenticated._id,
-          mailSignup: req.authenticated.mailSignup,
-          dateCreated: Date.now(),
-          sheetImport: sheet,
-          doct: doct,
-          records: false
-        })
+        })).map(el => { return el._id }).toString()
 
-        if (checkStore === true) {
+        console.log("só uma vez")
+
+        if (vid) {
+          console.log("sem criar")
+          idVo = vid
+        } else {
+          let documentVol = new Volume({
+            location: xlData[i][colunLocation],
+            volumeType: "BOX",
+            guardType: "GERENCIADA",
+            status: "ATIVO",
+            storehouse: req.body.storehouse,
+            uniqueField: `${xlData[i][colunLocation]}-${storehouse}`,
+            company: company,
+            departament: departament,
+            author: req.authenticated._id,
+            mailSignup: req.authenticated.mailSignup,
+            dateCreated: Date.now(),
+            sheetImport: sheet,
+            doct: doct,
+            records: false
+          })
+
 
           if (idPosition !== '') {
             if (JSON.parse(checkPosition) === false) {
@@ -154,195 +151,381 @@ class ArchivesRouter extends ModelRouter<Archive> {
             typeError.push({ row: i + 1, msgError: "VERIFIQUE A POSIÇÃO, NÃO ENCONTRADA NO MAPA OU ATUALIZE O MAPA!", location: xlData[i][colunLocation] })
 
           }
-          //
+        }
+        if (idVo === "") {
+          console.log("deu ruin não tem id")
 
         } else {
+          if (currentTime === 0) {
+            const documentAr = new Archive({
+              company: company,
+              departament: departament,
+              storehouse: storehouse,
+              volume: idVo,
+              doct: doct,
+              tag: Object.values(xlData[i]).slice(1),
+              author: req.authenticated._id,
+              mailSignup: req.authenticated.mailSignup,
+              sponsor: idOfSponsor,
+              sheetImport: sheet
 
-          console.log("Aqui é sem controle de mapa")
+            });
+            documentAr.save()
+              ///sinaliza se a caixa contem registros.
+              .then(await Volume.update({ _id: idVo.toString() }, { $set: { records: true } }))
+              .catch(next);
+            // console.log("importados",i)
 
+            arr.push(-i.toString())
 
-          
-          
+          } else {
+            //com data
+            let tg = Object.values(xlData[i]).slice(1)
+            let init = tg
+            //PROCURA A DATA DENTRO DO TEXTO PELA POSIÇÃO DO LABEL DO INDICE
+            let d2 = [{
+              data2: (init[docItem])
+            }]
 
+            let dataSplit2 = d2.map(el => { return el.data2 }).toString()
+            let patternDATAFULL = /^[0-9]{2}\/[0-9]{2}\/[0-9]{4}$/
+            let patternCompt = /[0-9]{2}\/[0-9]{4}$/
+            let patternYYYY = /[0-9]{4}$/
+
+            if (patternDATAFULL.test(dataSplit2)) {
+              // console.log("a DAta "+dataSplit2+" está correta.")
+              let d = dataSplit2.split("/")
+
+              let year = Number(d[2])
+              let mounth = Number(d[1])
+              let day = Number(d[0])
+              let startDateCurrent = new Date(year, mounth - 1, day + 1)
+              let finalDateCurrent = new Date(year + currentTime, mounth - 1, day + 1)
+
+              let finalDateIntermediate = new Date(year + (currentTime + intermediateTime), mounth - 1, day + 1)
+              // console.log(" MMYYY Start current"+startDateCurrent+"finalDaeCurrent"+finalDateCurrent+"finalDate Intermediate"+ finalDateIntermediate)
+              let document = new Archive({
+                company: company,
+                departament: departament,
+                storehouse: storehouse,
+                volume: idVo,
+                doct: doct,
+                tag: Object.values(xlData[i]).slice(1),
+                author: req.authenticated._id,
+                mailSignup: req.authenticated.mailSignup,
+                sponsor: idOfSponsor,
+                sheetImport: sheet,
+                //  create: dtaa,
+                startDateCurrent: startDateCurrent,
+                finalDateCurrent: finalDateCurrent,
+                finalDateIntermediate: finalDateIntermediate,
+                finalFase: dfinal
+
+              });
+              await document.save()
+                .then(await Volume.update({ _id: idVo.toString() }, { $set: { records: true } }))
+                .catch(next);
+              vol.push(document)
+
+            } else if (patternCompt.test(dataSplit2)) {
+              let ds = dataSplit2.split("/")
+              let year = Number(ds[1])
+              let mounth = Number(ds[0])
+              let startDateCurrent = new Date(year, mounth - 1, 1)
+              let finalDateCurrent = new Date(year + currentTime, mounth - 1, 1)
+              let finalDateIntermediate = new Date(year + (currentTime + intermediateTime), mounth - 1, 1)
+              // console.log(" MMYYY Start current"+startDateCurrent+"finalDaeCurrent"+finalDateCurrent+"finalDate Intermediate"+ finalDateIntermediate)
+              let document = new Archive({
+                company: company,
+                departament: departament,
+                storehouse: storehouse,
+                volume: idVo,
+                doct: doct,
+                tag: Object.values(xlData[i]).slice(1),
+                author: req.authenticated._id,
+                mailSignup: req.authenticated.mailSignup,
+                sponsor: idOfSponsor,
+                sheetImport: sheet,
+                //  create: dtaa,
+                startDateCurrent: startDateCurrent,
+                finalDateCurrent: finalDateCurrent,
+                finalDateIntermediate: finalDateIntermediate,
+                finalFase: dfinal
+
+              });
+              await document.save()
+                .then(await Volume.update({ _id: idVo.toString() }, { $set: { records: true } }))
+                .catch(next);
+              vol.push(document)
+            } else if (patternYYYY.test(dataSplit2)) {
+
+              let year = Number(dataSplit2)
+              let mounth = Number(12)
+              let day = Number(31)
+              let startDateCurrent = new Date(year, mounth - 1, day)
+
+              let finalDateCurrent = new Date(year + currentTime, mounth - 1, day)
+
+              let finalDateIntermediate = new Date(year + (currentTime + intermediateTime), mounth - 1, day)
+
+              // console.log(" MMYYY Start current"+startDateCurrent+"finalDaeCurrent"+finalDateCurrent+"finalDate Intermediate"+ finalDateIntermediate)
+              let document = new Archive({
+                company: company,
+                departament: departament,
+                storehouse: storehouse,
+                volume: idVo,
+                doct: doct,
+                tag: Object.values(xlData[i]).slice(1),
+                author: req.authenticated._id,
+                mailSignup: req.authenticated.mailSignup,
+                sponsor: idOfSponsor,
+                sheetImport: sheet,
+                //  create: dtaa,
+                startDateCurrent: startDateCurrent,
+                finalDateCurrent: finalDateCurrent,
+                finalDateIntermediate: finalDateIntermediate,
+                finalFase: dfinal
+
+              });
+              await document.save()
+                .then(await Volume.update({ _id: idVo.toString() }, { $set: { records: true } }))
+                .catch(next);
+              vol.push(document)
+            } else {
+              //aqui vai erros
+              typeError.push({ row: i + 1, msgError: "VERIFIQUE A CONFIGURAÇÃO DE TEMPORALIDADE DESSE DOCUMENTO!", location: xlData[i][colunLocation] })
+              console.log("tem erros aqui")
+            }
+          }
         }
-
-
-
-
       }
-      if (idVo === "") {
-        console.log("deu ruin não tem id")
+    } else {
 
+      for (let i = 0; xlData.length > i; i++) {
 
-      } else {
+        console.log("bora indexar")
 
+        let vid = (await Volume.find({
+          location: xlData[i][colunLocation],
+          storehouse: storehouse,
+          company: company,
+          departament: departament,
+          volumeType: "BOX",
+          guardType: "GERENCIADA",
+          status: "ATIVO",
+        })).map(el => { return el._id }).toString()
 
-        if (currentTime === 0) {
+        console.log("só uma vez")
 
-          const documentAr = new Archive({
+        if (vid) {
+          console.log("sem criar")
+          idVo = vid
+        } else {
+          let documentVol = new Volume({
+            location: xlData[i][colunLocation],
+            volumeType: "BOX",
+            guardType: "GERENCIADA",
+            status: "ATIVO",
+            storehouse: req.body.storehouse,
+            uniqueField: `${xlData[i][colunLocation]}-${storehouse}`,
             company: company,
             departament: departament,
-            storehouse: storehouse,
-            volume: idVo,
-            doct: doct,
-            tag: Object.values(xlData[i]).slice(1),
             author: req.authenticated._id,
             mailSignup: req.authenticated.mailSignup,
-            sponsor: idOfSponsor,
-            sheetImport: sheet
+            dateCreated: Date.now(),
+            sheetImport: sheet,
+            doct: doct,
+            records: false
+          })
 
-          });
-          documentAr.save()
-            ///sinaliza se a caixa contem registros.
-            .then(await Volume.update({ _id: idVo.toString() }, { $set: { records: true } }))
-            .catch(next);
-          // console.log("importados",i)
+        
 
-          arr.push(-i.toString())
+          let v = await Volume.find({
+            mailSignup: req.authenticated.mailSignup,
+            location: xlData[i][colunLocation],
+            storehouse: storehouse,
+            status: { $ne: "BAIXADO" }
+          })
 
-        } else {
-          //com data
-          let tg = Object.values(xlData[i]).slice(1)
-          let init = tg
-          //PROCURA A DATA DENTRO DO TEXTO PELA POSIÇÃO DO LABEL DO INDICE
-          let d2 = [{
-            data2: (init[docItem])
-          }]
+          if (v.length === 0) {
 
-          let dataSplit2 = d2.map(el => { return el.data2 }).toString()
-          let patternDATAFULL = /^[0-9]{2}\/[0-9]{2}\/[0-9]{4}$/
-          let patternCompt = /[0-9]{2}\/[0-9]{4}$/
-          let patternYYYY = /[0-9]{4}$/
+            await documentVol.save()
+            idVo = documentVol._id
 
-          if (patternDATAFULL.test(dataSplit2)) {
-            // console.log("a DAta "+dataSplit2+" está correta.")
-            let d = dataSplit2.split("/")
 
-            let year = Number(d[2])
-            let mounth = Number(d[1])
-            let day = Number(d[0])
-            let startDateCurrent = new Date(year, mounth - 1, day + 1)
-
-            let finalDateCurrent = new Date(year + currentTime, mounth - 1, day + 1)
-
-            let finalDateIntermediate = new Date(year + (currentTime + intermediateTime), mounth - 1, day + 1)
-            // console.log(" MMYYY Start current"+startDateCurrent+"finalDaeCurrent"+finalDateCurrent+"finalDate Intermediate"+ finalDateIntermediate)
-            let document = new Archive({
-              company: company,
-              departament: departament,
-              storehouse: storehouse,
-              volume: idVo,
-              doct: doct,
-              tag: Object.values(xlData[i]).slice(1),
-              author: req.authenticated._id,
-              mailSignup: req.authenticated.mailSignup,
-              sponsor: idOfSponsor,
-              sheetImport: sheet,
-              //  create: dtaa,
-              startDateCurrent: startDateCurrent,
-              finalDateCurrent: finalDateCurrent,
-              finalDateIntermediate: finalDateIntermediate,
-              finalFase: dfinal
-
-            });
-            await document.save()
-              .then(await Volume.update({ _id: idVo.toString() }, { $set: { records: true } }))
-              .catch(next);
-            vol.push(document)
-
-          } else if (patternCompt.test(dataSplit2)) {
-            let ds = dataSplit2.split("/")
-            let year = Number(ds[1])
-            let mounth = Number(ds[0])
-
-            let startDateCurrent = new Date(year, mounth - 1, 1)
-
-            let finalDateCurrent = new Date(year + currentTime, mounth - 1, 1)
-
-            let finalDateIntermediate = new Date(year + (currentTime + intermediateTime), mounth - 1, 1)
-            // console.log(" MMYYY Start current"+startDateCurrent+"finalDaeCurrent"+finalDateCurrent+"finalDate Intermediate"+ finalDateIntermediate)
-            let document = new Archive({
-              company: company,
-              departament: departament,
-              storehouse: storehouse,
-              volume: idVo,
-              doct: doct,
-              tag: Object.values(xlData[i]).slice(1),
-              author: req.authenticated._id,
-              mailSignup: req.authenticated.mailSignup,
-              sponsor: idOfSponsor,
-              sheetImport: sheet,
-              //  create: dtaa,
-              startDateCurrent: startDateCurrent,
-              finalDateCurrent: finalDateCurrent,
-              finalDateIntermediate: finalDateIntermediate,
-              finalFase: dfinal
-
-            });
-            await document.save()
-              .then(await Volume.update({ _id: idVo.toString() }, { $set: { records: true } }))
-              .catch(next);
-            vol.push(document)
-          } else if (patternYYYY.test(dataSplit2)) {
-
-            let year = Number(dataSplit2)
-            let mounth = Number(12)
-            let day = Number(31)
-            let startDateCurrent = new Date(year, mounth - 1, day)
-
-            let finalDateCurrent = new Date(year + currentTime, mounth - 1, day)
-
-            let finalDateIntermediate = new Date(year + (currentTime + intermediateTime), mounth - 1, day)
-
-            // console.log(" MMYYY Start current"+startDateCurrent+"finalDaeCurrent"+finalDateCurrent+"finalDate Intermediate"+ finalDateIntermediate)
-            let document = new Archive({
-              company: company,
-              departament: departament,
-              storehouse: storehouse,
-              volume: idVo,
-              doct: doct,
-              tag: Object.values(xlData[i]).slice(1),
-              author: req.authenticated._id,
-              mailSignup: req.authenticated.mailSignup,
-              sponsor: idOfSponsor,
-              sheetImport: sheet,
-              //  create: dtaa,
-              startDateCurrent: startDateCurrent,
-              finalDateCurrent: finalDateCurrent,
-              finalDateIntermediate: finalDateIntermediate,
-              finalFase: dfinal
-
-            });
-            await document.save()
-              .then(await Volume.update({ _id: idVo.toString() }, { $set: { records: true } }))
-              .catch(next);
-            vol.push(document)
           } else {
-            //aqui vai erros
-            typeError.push({ row: i + 1, msgError: "VERIFIQUE A CONFIGURAÇÃO DE TEMPORALIDADE DESSE DOCUMENTO!", location: xlData[i][colunLocation] })
-            console.log("tem erros aqui")
+            typeError.push({ row: i + 1, msgError: "VERIFIQUE A POSIÇÃO JA ESTA EM USO!", location: xlData[i][colunLocation] })
+            // catch(next)
+            // console.log("CAIXA EM USO")
+
           }
-
-
-
-
-
-
-
-
+          
         }
 
 
-        //agora aqui ramificar condições de temporalidades.
+        
+        //AQUI COMEÇA A INDEXAÇÃO 
+        if (idVo === "") {
+           console.log("criar a caixa")
+          
+
+        } else {
+          if (currentTime === 0) {
+            const documentAr = new Archive({
+              company: company,
+              departament: departament,
+              storehouse: storehouse,
+              volume: idVo,
+              doct: doct,
+              tag: Object.values(xlData[i]).slice(1),
+              author: req.authenticated._id,
+              mailSignup: req.authenticated.mailSignup,
+              sponsor: idOfSponsor,
+              sheetImport: sheet
+
+            });
+            documentAr.save()
+              ///sinaliza se a caixa contem registros.
+              .then(await Volume.update({ _id: idVo.toString() }, { $set: { records: true } }))
+              .catch(next);
+            // console.log("importados",i)
+
+            arr.push(-i.toString())
+
+          } else {
+            //com data
+            let tg = Object.values(xlData[i]).slice(1)
+            let init = tg
+            //PROCURA A DATA DENTRO DO TEXTO PELA POSIÇÃO DO LABEL DO INDICE
+            let d2 = [{
+              data2: (init[docItem])
+            }]
+
+            let dataSplit2 = d2.map(el => { return el.data2 }).toString()
+            let patternDATAFULL = /^[0-9]{2}\/[0-9]{2}\/[0-9]{4}$/
+            let patternCompt = /[0-9]{2}\/[0-9]{4}$/
+            let patternYYYY = /[0-9]{4}$/
+
+            if (patternDATAFULL.test(dataSplit2)) {
+              // console.log("a DAta "+dataSplit2+" está correta.")
+              let d = dataSplit2.split("/")
+
+              let year = Number(d[2])
+              let mounth = Number(d[1])
+              let day = Number(d[0])
+              let startDateCurrent = new Date(year, mounth - 1, day + 1)
+              let finalDateCurrent = new Date(year + currentTime, mounth - 1, day + 1)
+
+              let finalDateIntermediate = new Date(year + (currentTime + intermediateTime), mounth - 1, day + 1)
+              // console.log(" MMYYY Start current"+startDateCurrent+"finalDaeCurrent"+finalDateCurrent+"finalDate Intermediate"+ finalDateIntermediate)
+              let document = new Archive({
+                company: company,
+                departament: departament,
+                storehouse: storehouse,
+                volume: idVo,
+                doct: doct,
+                tag: Object.values(xlData[i]).slice(1),
+                author: req.authenticated._id,
+                mailSignup: req.authenticated.mailSignup,
+                sponsor: idOfSponsor,
+                sheetImport: sheet,
+                //  create: dtaa,
+                startDateCurrent: startDateCurrent,
+                finalDateCurrent: finalDateCurrent,
+                finalDateIntermediate: finalDateIntermediate,
+                finalFase: dfinal
+
+              });
+              await document.save()
+                .then(await Volume.update({ _id: idVo.toString() }, { $set: { records: true } }))
+                .catch(next);
+              vol.push(document)
+
+            } else if (patternCompt.test(dataSplit2)) {
+              let ds = dataSplit2.split("/")
+              let year = Number(ds[1])
+              let mounth = Number(ds[0])
+              let startDateCurrent = new Date(year, mounth - 1, 1)
+              let finalDateCurrent = new Date(year + currentTime, mounth - 1, 1)
+              let finalDateIntermediate = new Date(year + (currentTime + intermediateTime), mounth - 1, 1)
+              // console.log(" MMYYY Start current"+startDateCurrent+"finalDaeCurrent"+finalDateCurrent+"finalDate Intermediate"+ finalDateIntermediate)
+              let document = new Archive({
+                company: company,
+                departament: departament,
+                storehouse: storehouse,
+                volume: idVo,
+                doct: doct,
+                tag: Object.values(xlData[i]).slice(1),
+                author: req.authenticated._id,
+                mailSignup: req.authenticated.mailSignup,
+                sponsor: idOfSponsor,
+                sheetImport: sheet,
+                //  create: dtaa,
+                startDateCurrent: startDateCurrent,
+                finalDateCurrent: finalDateCurrent,
+                finalDateIntermediate: finalDateIntermediate,
+                finalFase: dfinal
+
+              });
+              await document.save()
+                .then(await Volume.update({ _id: idVo.toString() }, { $set: { records: true } }))
+                .catch(next);
+              vol.push(document)
+            } else if (patternYYYY.test(dataSplit2)) {
+
+              let year = Number(dataSplit2)
+              let mounth = Number(12)
+              let day = Number(31)
+              let startDateCurrent = new Date(year, mounth - 1, day)
+
+              let finalDateCurrent = new Date(year + currentTime, mounth - 1, day)
+
+              let finalDateIntermediate = new Date(year + (currentTime + intermediateTime), mounth - 1, day)
+
+              // console.log(" MMYYY Start current"+startDateCurrent+"finalDaeCurrent"+finalDateCurrent+"finalDate Intermediate"+ finalDateIntermediate)
+              let document = new Archive({
+                company: company,
+                departament: departament,
+                storehouse: storehouse,
+                volume: idVo,
+                doct: doct,
+                tag: Object.values(xlData[i]).slice(1),
+                author: req.authenticated._id,
+                mailSignup: req.authenticated.mailSignup,
+                sponsor: idOfSponsor,
+                sheetImport: sheet,
+                //  create: dtaa,
+                startDateCurrent: startDateCurrent,
+                finalDateCurrent: finalDateCurrent,
+                finalDateIntermediate: finalDateIntermediate,
+                finalFase: dfinal
+
+              });
+              await document.save()
+                .then(await Volume.update({ _id: idVo.toString() }, { $set: { records: true } }))
+                .catch(next);
+              vol.push(document)
+            } else {
+              //aqui vai erros
+              typeError.push({ row: i + 1, msgError: "VERIFIQUE A CONFIGURAÇÃO DE TEMPORALIDADE DESSE DOCUMENTO!", location: xlData[i][colunLocation] })
+              console.log("tem erros aqui")
+            }
+          }
+        }
 
 
-        // console.log(arr.length)
-        bufferFrom(arr, 'uft8')
-        // console.log(bufferFrom(arr, 'uft8'))}
+        //////
+
+
+
 
 
       }
+
+
     }
+
+      console.log(typeError)
 
 
     resp.send({
