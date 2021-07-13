@@ -3,7 +3,7 @@ import * as fs from 'fs'
 import {Server} from './server/server'
 import {environment} from './common/environment'
 
-import {volumesRouter} from './volumes/volumes.router'
+
 import { User } from './users/users.model';
 import { Company } from './companies/companies.model';
 import { Doct } from './docts/docts.model';

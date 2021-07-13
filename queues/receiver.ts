@@ -22,24 +22,22 @@ amqp.connect(connectionAmqp,(err,connection)=>{
             durable:false
         })
         channel.consume(queueName, (msg)=>{
-
+            
             
             let receive =JSON.parse(msg.content.toString())
-            const {id,sponsor,volumeType,company,departament,storehouse, guardType, sheet,dataSeet} = receive
+            const {id,sponsor,company,doct,departament,storehouse,sheet,dataSeet} = receive
                  
              axios({
                 method: 'post',
                 url: urlimport,
-                timeout: (60000 * 60) *24, // Wait for 10 seconds
-                
+                timeout: (60000 * 60) *24, // Wait for 10 seconds                
                 data: {
                   id: id,
-                  sponsor: sponsor,
-                  volumeType:volumeType,
+                  sponsor: sponsor,                  
                   company:company,
+                  doct:doct,
                   departament:departament,
-                  storehouse:storehouse,
-                  guardType:guardType,
+                  storehouse:storehouse,                  
                   sheet:sheet,
                   dataSeet:dataSeet
                 }

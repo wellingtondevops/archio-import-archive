@@ -8,20 +8,38 @@ import 'moment/locale/pt-br';
 import xl = require('excel4node')
 var XLSX = require('xlsx')
 const bufferFrom = require('buffer-from')
+const admin = require('firebase-admin')
 
 import { authenticate } from '../security/auth.handler';
 import { authorize } from "../security/authz.handler";
 import { Archive } from "./archives.model";
 import { Volume } from "../volumes/volumes.model";
-import { Company } from "../companies/companies.model";
 import { User } from "../users/users.model";
 import { Doct } from '../docts/docts.model';
 import { Sheetarchive } from '../sheetarchives/sheetarchives.model'
 import { Position } from '../positions/positions.model'
 import { Storehouse } from '../storehouses/storehouses.model'
-import { Profile } from "../profiles/profiles.model";
-import { Sheetvolume } from "../sheetvolumes/sheetvolumes.model";
-import { createVolumeMapTrue } from "../utils/archivesfunctions"
+import { environment } from "../common/environment";
+
+
+admin.initializeApp({
+  credential: admin.credential.cert({
+    "type": environment.firebase.type,
+    "project_id": environment.firebase.project_id,
+    "private_key_id": environment.firebase.private_key_id,
+    "private_key": environment.firebase.private_key,
+    "client_email": environment.firebase.client_email,
+    "client_id": environment.firebase.client_id,
+    "auth_uri": environment.firebase.auth_uri,
+    "token_uri": environment.firebase.token_uri,
+    "auth_provider_x509_cert_url": environment.firebase.auth_provider_x509_cert_url,
+    "client_x509_cert_url": environment.firebase.client_x509_cert_url
+  }),
+  databaseURL: environment.firebase.databaseURL
+});
+
+
+const db = admin.database();
 
 
 class ArchivesRouter extends ModelRouter<Archive> {
@@ -33,24 +51,28 @@ class ArchivesRouter extends ModelRouter<Archive> {
   import = async (req, resp, next) => {
 
 
-    if (req.files.uploaded_file.type !== "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet") {
-      return next(new MethodNotAllowedError(`SOMENTE SÃO PERMITIDOS ARQUIVOS XLSX!`))
-    }
+    const iconerror = environment.icons.iconerror
+    const iconsuscess = environment.icons.iconsuscess
 
 
 
-    const { company, departament, storehouse, doct } = req.body
 
-    const _idSponsor = await User.find({ email: req.authenticated.mailSignup })
+    const { id, sponsor, company, departament, storehouse, doct, sheet, dataSeet } = req.body
+    let workbook = dataSeet    
+
+
+    const _idSponsor = await User.find({ email: sponsor })
     let idSponsor = await _idSponsor.map(el => { return el._id })
     const idOfSponsor = idSponsor.toString()
     const Fields = await Doct.find({ "_id": doct })
     const lengthFields = Fields.map(el => { return el.label }).pop()
-    let workbook = XLSX.readFile(req.files.uploaded_file.path);
+
+    
+    // let workbook = XLSX.readFile(req.files.uploaded_file.path);
     let sheet_name_list = workbook.SheetNames;
     let xlData = XLSX.utils.sheet_to_json(workbook.Sheets[sheet_name_list[0]]);
-    const plan = `${Date.now().toString()}-${req.files.uploaded_file.name}`
-    const sheet = plan.toString()
+    const plan = sheet
+    // const sheet = plan.toString()
 
     let _titles = xlData[0]
     let titles = Object.keys(_titles)
@@ -75,32 +97,48 @@ class ArchivesRouter extends ModelRouter<Archive> {
     let arr = []
     let vol = []
     let err = []
-    const u = await User.find({ _id: req.authenticated._id })
+    const u = await User.find({ _id: id })
     const username = u.map(el => { return el.name })
     const stor = await Storehouse.find({ _id: storehouse })
     const checkStore = stor.map(el => { return el.mapStorehouse }).pop()
     let typeError = []
 
-    if ((headers.length - 1) !== lengthFields.length) {
-      return next(new MethodNotAllowedError(`O DOCUMENTO POSSUI ${lengthFields.length} CAMPO(S) E SUA PLANILHA POSSUI ${headers.length - 1} COLUNA(S)!`))
-
-    }
-
+  
     let locationTitle = headers[0]
     let indices = [headers.toString().split(",")].pop()
     let coluns = indices.slice(1)
     let colunLocation = indices.shift().toString()
 
     let idVo = ""
+   
+    if ((headers.length - 1) !== lengthFields.length) {
+      // return next(new MethodNotAllowedError(`O DOCUMENTO POSSUI ${lengthFields.length} CAMPO(S) E SUA PLANILHA POSSUI ${headers.length - 1} COLUNA(S)!`))
+
+
+      const newNotification = {
+        title: "Importação de Arquivos",
+        msg: `O DOCUMENTO POSSUI ${lengthFields.length} CAMPO(S) E SUA PLANILHA POSSUI ${headers.length - 1} COLUNA(S)!`,
+        linkIcon: iconsuscess,
+        user: id,
+        mailSignup: sponsor,
+        active: true,
+        dateCreated: Date.now()
+      }
+      db.ref('notifications').push(newNotification)
+        .catch(next)
+
+    }
+
 
     if (checkStore === true) {
+      
 
-      for (let i = 0; xlData.length > i; i++) {
+      for (let i = 0; xlData.length > i; i++) {   
+        // console.log("estou aqui")     
 
         let controlPos = await Position.find({ storehouse: storehouse, position: { $eq: xlData[i][colunLocation] } })
         let idPosition = await controlPos.map(el => { return el._id }).toString()
         let checkPosition = await controlPos.map(el => { return el.used }).toString()
-
 
         let vid = (await Volume.find({
           location: xlData[i][colunLocation],
@@ -109,13 +147,14 @@ class ArchivesRouter extends ModelRouter<Archive> {
           departament: departament,
           volumeType: "BOX",
           guardType: "GERENCIADA",
+          sheetImport: sheet,
           status: "ATIVO",
         })).map(el => { return el._id }).toString()
 
-        console.log("só uma vez")
+        // console.log("só uma vez")
 
         if (vid) {
-          console.log("sem criar")
+          // console.log("sem criar")
           idVo = vid
         } else {
           let documentVol = new Volume({
@@ -123,12 +162,12 @@ class ArchivesRouter extends ModelRouter<Archive> {
             volumeType: "BOX",
             guardType: "GERENCIADA",
             status: "ATIVO",
-            storehouse: req.body.storehouse,
+            storehouse: storehouse,
             uniqueField: `${xlData[i][colunLocation]}-${storehouse}`,
             company: company,
             departament: departament,
-            author: req.authenticated._id,
-            mailSignup: req.authenticated.mailSignup,
+            author: id,
+            mailSignup: sponsor,
             dateCreated: Date.now(),
             sheetImport: sheet,
             doct: doct,
@@ -138,22 +177,22 @@ class ArchivesRouter extends ModelRouter<Archive> {
 
           if (idPosition !== '') {
             if (JSON.parse(checkPosition) === false) {
-              console.log("criando")
+              // console.log("criando")
               await documentVol.save()
               idVo = documentVol._id
               await Position.update({ _id: idPosition }, { $set: { used: true, company: company, departament: departament } })
                 .catch(next)
             } else {
-              typeError.push({ row: i + 1, msgError: "VERIFIQUE A POSIÇÃO, JÁ PODE ESTA EM USO POR OUTRO DEPARTAMENTO OU EMPRESA!", location: xlData[i][colunLocation] })
+              typeError.push({ row: i + 1, msgError: "VERIFIQUE A POSIÇÃO, JÁ PODE ESTA EM USO POR OUTRO DEPARTAMENTO OU EMPRESA!", tag: Object.values(xlData[i]).slice(1), location: xlData[i][colunLocation] })
 
             }
           } else {
-            typeError.push({ row: i + 1, msgError: "VERIFIQUE A POSIÇÃO, NÃO ENCONTRADA NO MAPA OU ATUALIZE O MAPA!", location: xlData[i][colunLocation] })
+            typeError.push({ row: i + 1, msgError: "VERIFIQUE A POSIÇÃO, NÃO ENCONTRADA NO MAPA OU ATUALIZE O MAPA!", tag: Object.values(xlData[i]).slice(1), location: xlData[i][colunLocation] })
 
           }
         }
         if (idVo === "") {
-          console.log("deu ruin não tem id")
+          // console.log("deu ruin não tem id")
 
         } else {
           if (currentTime === 0) {
@@ -164,8 +203,8 @@ class ArchivesRouter extends ModelRouter<Archive> {
               volume: idVo,
               doct: doct,
               tag: Object.values(xlData[i]).slice(1),
-              author: req.authenticated._id,
-              mailSignup: req.authenticated.mailSignup,
+              author: id,
+              mailSignup: sponsor,
               sponsor: idOfSponsor,
               sheetImport: sheet
 
@@ -174,7 +213,7 @@ class ArchivesRouter extends ModelRouter<Archive> {
               ///sinaliza se a caixa contem registros.
               .then(await Volume.update({ _id: idVo.toString() }, { $set: { records: true } }))
               .catch(next);
-            // console.log("importados",i)
+            console.log("importados",i)
 
             arr.push(-i.toString())
 
@@ -211,8 +250,8 @@ class ArchivesRouter extends ModelRouter<Archive> {
                 volume: idVo,
                 doct: doct,
                 tag: Object.values(xlData[i]).slice(1),
-                author: req.authenticated._id,
-                mailSignup: req.authenticated.mailSignup,
+                author: id,
+                mailSignup: sponsor,
                 sponsor: idOfSponsor,
                 sheetImport: sheet,
                 //  create: dtaa,
@@ -242,8 +281,8 @@ class ArchivesRouter extends ModelRouter<Archive> {
                 volume: idVo,
                 doct: doct,
                 tag: Object.values(xlData[i]).slice(1),
-                author: req.authenticated._id,
-                mailSignup: req.authenticated.mailSignup,
+                author: id,
+                mailSignup: sponsor,
                 sponsor: idOfSponsor,
                 sheetImport: sheet,
                 //  create: dtaa,
@@ -276,8 +315,8 @@ class ArchivesRouter extends ModelRouter<Archive> {
                 volume: idVo,
                 doct: doct,
                 tag: Object.values(xlData[i]).slice(1),
-                author: req.authenticated._id,
-                mailSignup: req.authenticated.mailSignup,
+                author: id,
+                mailSignup: sponsor,
                 sponsor: idOfSponsor,
                 sheetImport: sheet,
                 //  create: dtaa,
@@ -293,7 +332,7 @@ class ArchivesRouter extends ModelRouter<Archive> {
               vol.push(document)
             } else {
               //aqui vai erros
-              typeError.push({ row: i + 1, msgError: "VERIFIQUE A CONFIGURAÇÃO DE TEMPORALIDADE DESSE DOCUMENTO!", location: xlData[i][colunLocation] })
+              typeError.push({ row: i + 1, msgError: "VERIFIQUE A CONFIGURAÇÃO DE TEMPORALIDADE DESSE DOCUMENTO!", tag: Object.values(xlData[i]).slice(1), location: xlData[i][colunLocation] })
               console.log("tem erros aqui")
             }
           }
@@ -303,7 +342,7 @@ class ArchivesRouter extends ModelRouter<Archive> {
 
       for (let i = 0; xlData.length > i; i++) {
 
-        console.log("bora indexar")
+        // console.log("bora indexar")
 
         let vid = (await Volume.find({
           location: xlData[i][colunLocation],
@@ -326,22 +365,22 @@ class ArchivesRouter extends ModelRouter<Archive> {
             volumeType: "BOX",
             guardType: "GERENCIADA",
             status: "ATIVO",
-            storehouse: req.body.storehouse,
+            storehouse: storehouse,
             uniqueField: `${xlData[i][colunLocation]}-${storehouse}`,
             company: company,
             departament: departament,
-            author: req.authenticated._id,
-            mailSignup: req.authenticated.mailSignup,
+            author: id,
+            mailSignup: sponsor,
             dateCreated: Date.now(),
             sheetImport: sheet,
             doct: doct,
             records: false
           })
 
-        
+
 
           let v = await Volume.find({
-            mailSignup: req.authenticated.mailSignup,
+            mailSignup: sponsor,
             location: xlData[i][colunLocation],
             storehouse: storehouse,
             status: { $ne: "BAIXADO" }
@@ -354,20 +393,20 @@ class ArchivesRouter extends ModelRouter<Archive> {
 
 
           } else {
-            typeError.push({ row: i + 1, msgError: "VERIFIQUE A POSIÇÃO JA ESTA EM USO!", location: xlData[i][colunLocation] })
+            typeError.push({ row: i + 1, msgError: "VERIFIQUE A POSIÇÃO JA ESTA EM USO!", tag: Object.values(xlData[i]).slice(1), location: xlData[i][colunLocation] })
             // catch(next)
-            // console.log("CAIXA EM USO")
+            console.log("CAIXA EM USO")
 
           }
-          
+
         }
 
 
-        
+
         //AQUI COMEÇA A INDEXAÇÃO 
         if (idVo === "") {
-           console.log("criar a caixa")
-          
+
+
 
         } else {
           if (currentTime === 0) {
@@ -378,17 +417,16 @@ class ArchivesRouter extends ModelRouter<Archive> {
               volume: idVo,
               doct: doct,
               tag: Object.values(xlData[i]).slice(1),
-              author: req.authenticated._id,
-              mailSignup: req.authenticated.mailSignup,
+              author: id,
+              mailSignup: sponsor,
               sponsor: idOfSponsor,
               sheetImport: sheet
 
             });
             documentAr.save()
-              ///sinaliza se a caixa contem registros.
+
               .then(await Volume.update({ _id: idVo.toString() }, { $set: { records: true } }))
               .catch(next);
-            // console.log("importados",i)
 
             arr.push(-i.toString())
 
@@ -425,8 +463,8 @@ class ArchivesRouter extends ModelRouter<Archive> {
                 volume: idVo,
                 doct: doct,
                 tag: Object.values(xlData[i]).slice(1),
-                author: req.authenticated._id,
-                mailSignup: req.authenticated.mailSignup,
+                author: id,
+                mailSignup: sponsor,
                 sponsor: idOfSponsor,
                 sheetImport: sheet,
                 //  create: dtaa,
@@ -456,8 +494,8 @@ class ArchivesRouter extends ModelRouter<Archive> {
                 volume: idVo,
                 doct: doct,
                 tag: Object.values(xlData[i]).slice(1),
-                author: req.authenticated._id,
-                mailSignup: req.authenticated.mailSignup,
+                author: id,
+                mailSignup: sponsor,
                 sponsor: idOfSponsor,
                 sheetImport: sheet,
                 //  create: dtaa,
@@ -490,8 +528,8 @@ class ArchivesRouter extends ModelRouter<Archive> {
                 volume: idVo,
                 doct: doct,
                 tag: Object.values(xlData[i]).slice(1),
-                author: req.authenticated._id,
-                mailSignup: req.authenticated.mailSignup,
+                author: id,
+                mailSignup: sponsor,
                 sponsor: idOfSponsor,
                 sheetImport: sheet,
                 //  create: dtaa,
@@ -507,44 +545,65 @@ class ArchivesRouter extends ModelRouter<Archive> {
               vol.push(document)
             } else {
               //aqui vai erros
-              typeError.push({ row: i + 1, msgError: "VERIFIQUE A CONFIGURAÇÃO DE TEMPORALIDADE DESSE DOCUMENTO!", location: xlData[i][colunLocation] })
-              console.log("tem erros aqui")
+              typeError.push({ row: i + 1, msgError: "VERIFIQUE A CONFIGURAÇÃO DE TEMPORALIDADE DESSE DOCUMENTO!", tag: Object.values(xlData[i]).slice(1), location: xlData[i][colunLocation] })
+
             }
           }
         }
-
-
-        //////
-
-
-
-
 
       }
 
 
     }
 
-      console.log(typeError)
+    if (typeError.length === 0) {
 
+      const newNotification = {
+        title: "Importação de Arquivos",
+        msg: `Foram importados ${xlData.length} Arquivos com Suscesso!`,
+        linkIcon: iconsuscess,
+        user: id,
+        mailSignup: sponsor,
+        active: true,
+        dateCreated: Date.now()
+      }
+      db.ref('notifications').push(newNotification)
+        .catch(next)
+      // console.log("sem erros")
+    } else {
 
-    resp.send({
+      let documentError = new Sheetarchive({
+        sheet: sheet,
+        mailSignup: sponsor,
+        logErrors: typeError
+      })
+      await documentError.save()
 
-      statusEndImportation: "importado",
-      erros: typeError
-    })
+      let sheetErros = `/sheetarchives/excel/${documentError.id}`
 
-
-
+      const newNotification = {
+        title: "Importação de Arquivos com erros",
+        msg: `Foram importados ${xlData.length -typeError.length} Arquivos com Suscesso, e não Importados ${typeError.length} Aquivos!`,
+        linkIcon: iconerror,
+        attachment: sheetErros,
+        user: id,
+        mailSignup: sponsor,
+        active: true,
+        dateCreated: Date.now()
+      }
+      db.ref('notifications').push(newNotification)
+        .catch(next)
+      resp.send()
+    }
+    next
     // quantidades de colunas desconiderar a pmeiro sempre -1
   }
 
 
 
   applyRoutes(applycation: restify.Server) {
-
     applycation.post(`${this.basePath}/import`, [
-      authorize("TYWIN", "DAENERYS"),
+
       this.import
     ]);
 
