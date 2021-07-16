@@ -195,7 +195,7 @@ class ArchivesRouter extends ModelRouter<Archive> {
           // console.log("deu ruin não tem id")
 
         } else {
-          if (currentTime === 0) {
+          if (docItem === -1) {
             const documentAr = new Archive({
               company: company,
               departament: departament,
@@ -352,12 +352,10 @@ class ArchivesRouter extends ModelRouter<Archive> {
           volumeType: "BOX",
           guardType: "GERENCIADA",
           status: "ATIVO",
-        })).map(el => { return el._id }).toString()
-
-        console.log("só uma vez")
+        })).map(el => { return el._id }).toString()       
 
         if (vid) {
-          console.log("sem criar")
+        
           idVo = vid
         } else {
           let documentVol = new Volume({
@@ -395,13 +393,11 @@ class ArchivesRouter extends ModelRouter<Archive> {
           } else {
             typeError.push({ row: i + 1, msgError: "VERIFIQUE A POSIÇÃO JA ESTA EM USO!", tag: Object.values(xlData[i]).slice(1), location: xlData[i][colunLocation] })
             // catch(next)
-            console.log("CAIXA EM USO")
+         
 
           }
 
         }
-
-
 
         //AQUI COMEÇA A INDEXAÇÃO 
         if (idVo === "") {
@@ -409,7 +405,7 @@ class ArchivesRouter extends ModelRouter<Archive> {
 
 
         } else {
-          if (currentTime === 0) {
+          if (docItem === -1) {
             const documentAr = new Archive({
               company: company,
               departament: departament,
