@@ -65,8 +65,8 @@ export const environment = {
 
     },
     icons:{
-        iconerror: process.env.ICONERROR||"https://storage.googleapis.com/archiobucket/ARCHIOFILES/icons/errors.png",
-        iconsuscess: process.env.ICONSUSCESS ||"https://storage.googleapis.com/archiobucket/ARCHIOFILES/icons/sucess.png"
+        iconerror: process.env.ICONERROR||"fa fa-exclamation-triangle fa-2x",
+        iconsuscess: process.env.ICONSUSCESS ||"fa fa-check-square fa-2x"
     }
 
 

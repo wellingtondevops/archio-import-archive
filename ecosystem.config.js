@@ -8,7 +8,7 @@ module.exports = {
     merge_logs: true,
     env: {
       SERVER_PORT: 3005,
-      DB_URL: "mongodb://earchiveTester:cdh0tAYUFJXDMB3t@cluster0-shard-00-00-rr6sx.mongodb.net:27017/earchive?ssl=true&replicaSet=Cluster0-shard-0&authSource=admin",  
+      DB_URL: "mongodb://archioDB:AbsuHS7eHTup32oerzoetm9Zr1lA29@cluster0-shard-00-00-rr6sx.mongodb.net:27017/archioProduction?ssl=true&replicaSet=Cluster0-shard-0&authSource=admin",
       NODE_ENV: "production",
       AMQP_URL:"amqp://archio:archio@rabbitmq",
       PROJECT_ID:  "archionotifier",
@@ -21,8 +21,8 @@ module.exports = {
       AUTH_PROVIDER_X509_CERT_URL: "https://www.googleapis.com/oauth2/v1/certs",
       CLIENT_X509_CERT_URL: "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-cpecv%40archionotifier.iam.gserviceaccount.com",
       DATABASEURL:'https://archionotifier-default-rtdb.firebaseio.com/',
-      ICONERROR:"https://storage.googleapis.com/archiobucket/ARCHIOFILES/icons/errors.png",
-      ICONSUSCESS: "https://storage.googleapis.com/archiobucket/ARCHIOFILES/icons/sucess.png",      
+      ICONERROR:"fa fa-exclamation-triangle fa-2x" ,
+      ICONSUSCESS: "fa fa-check-square fa-2x",      
       IMPORT_URL:"http://localhost:3005/archives/import"
       
     }
