@@ -7,8 +7,7 @@ module.exports = {
     watch: true,
     merge_logs: true,
     env: {
-      SERVER_PORT: 3005,
-      DB_URL: "mongodb://archioDB:AbsuHS7eHTup32oerzoetm9Zr1lA29@cluster0-shard-00-00-rr6sx.mongodb.net:27017/archioProduction?ssl=true&replicaSet=Cluster0-shard-0&authSource=admin",
+      SERVER_PORT: 3005,      
       NODE_ENV: "production",
       AMQP_URL:"amqp://archio:archio@rabbitmq",
       PROJECT_ID:  "archionotifier",

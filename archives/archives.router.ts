@@ -147,7 +147,7 @@ class ArchivesRouter extends ModelRouter<Archive> {
           departament: departament,
           volumeType: "BOX",
           guardType: "GERENCIADA",
-          sheetImport: sheet,
+          // sheetImport: sheet,
           status: "ATIVO",
         })).map(el => { return el._id }).toString()
 
