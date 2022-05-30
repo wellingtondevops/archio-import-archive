@@ -20,6 +20,7 @@ import { Sheetarchive } from '../sheetarchives/sheetarchives.model'
 import { Position } from '../positions/positions.model'
 import { Storehouse } from '../storehouses/storehouses.model'
 import { environment } from "../common/environment";
+import { setCronVolumes } from "../libary/flagVolumes";
 
 
 admin.initializeApp({
@@ -139,7 +140,7 @@ class ArchivesRouter extends ModelRouter<Archive> {
         let controlPos = await Position.find({ storehouse: storehouse, position: { $eq: xlData[i][colunLocation] } })
         let idPosition = await controlPos.map(el => { return el._id }).toString()
         let checkPosition = await controlPos.map(el => { return el.used }).toString()
-
+       
         let vid = (await Volume.find({
           location: xlData[i][colunLocation],
           storehouse: storehouse,
@@ -149,13 +150,17 @@ class ArchivesRouter extends ModelRouter<Archive> {
           guardType: "GERENCIADA",
           // sheetImport: sheet,
           status: "ATIVO",
-        })).map(el => { return el._id }).toString()
-
+        }))
+        .map(el => { return el._id }).toString()
+        
+        
         // console.log("só uma vez")
 
         if (vid) {
           // console.log("sem criar")
           idVo = vid
+
+          //verificar documento se a caixa ja existe veja o documento
         } else {
           let documentVol = new Volume({
             location: xlData[i][colunLocation],
@@ -210,9 +215,13 @@ class ArchivesRouter extends ModelRouter<Archive> {
 
             });
             documentAr.save()
+
+          
               ///sinaliza se a caixa contem registros.
               .then(await Volume.update({ _id: idVo.toString() }, { $set: { records: true } }))
               .catch(next);
+            
+              setCronVolumes([idVo])
             console.log("importados",i)
 
             arr.push(-i.toString())
@@ -262,8 +271,11 @@ class ArchivesRouter extends ModelRouter<Archive> {
 
               });
               await document.save()
+
                 .then(await Volume.update({ _id: idVo.toString() }, { $set: { records: true } }))
                 .catch(next);
+          
+                setCronVolumes([idVo])
               vol.push(document)
 
             } else if (patternCompt.test(dataSplit2)) {
@@ -295,6 +307,8 @@ class ArchivesRouter extends ModelRouter<Archive> {
               await document.save()
                 .then(await Volume.update({ _id: idVo.toString() }, { $set: { records: true } }))
                 .catch(next);
+              
+                setCronVolumes([idVo])
               vol.push(document)
             } else if (patternYYYY.test(dataSplit2)) {
 
@@ -329,6 +343,8 @@ class ArchivesRouter extends ModelRouter<Archive> {
               await document.save()
                 .then(await Volume.update({ _id: idVo.toString() }, { $set: { records: true } }))
                 .catch(next);
+        
+                setCronVolumes([idVo])
               vol.push(document)
             } else {
               //aqui vai erros
@@ -387,6 +403,7 @@ class ArchivesRouter extends ModelRouter<Archive> {
           if (v.length === 0) {
 
             await documentVol.save()
+   
             idVo = documentVol._id
 
 
@@ -423,6 +440,8 @@ class ArchivesRouter extends ModelRouter<Archive> {
 
               .then(await Volume.update({ _id: idVo.toString() }, { $set: { records: true } }))
               .catch(next);
+            
+              setCronVolumes([idVo])
 
             arr.push(-i.toString())
 
@@ -473,6 +492,9 @@ class ArchivesRouter extends ModelRouter<Archive> {
               await document.save()
                 .then(await Volume.update({ _id: idVo.toString() }, { $set: { records: true } }))
                 .catch(next);
+
+       
+                setCronVolumes([idVo])
               vol.push(document)
 
             } else if (patternCompt.test(dataSplit2)) {
@@ -504,6 +526,8 @@ class ArchivesRouter extends ModelRouter<Archive> {
               await document.save()
                 .then(await Volume.update({ _id: idVo.toString() }, { $set: { records: true } }))
                 .catch(next);
+           
+                setCronVolumes([idVo])
               vol.push(document)
             } else if (patternYYYY.test(dataSplit2)) {
 
@@ -538,6 +562,8 @@ class ArchivesRouter extends ModelRouter<Archive> {
               await document.save()
                 .then(await Volume.update({ _id: idVo.toString() }, { $set: { records: true } }))
                 .catch(next);
+          
+                setCronVolumes([idVo])
               vol.push(document)
             } else {
               //aqui vai erros
