@@ -71,7 +71,8 @@ class ArchivesRouter extends ModelRouter<Archive> {
     
     // let workbook = XLSX.readFile(req.files.uploaded_file.path);
     let sheet_name_list = workbook.SheetNames;
-    let xlData = XLSX.utils.sheet_to_json(workbook.Sheets[sheet_name_list[0]]);
+  
+    let xlData = XLSX.utils.sheet_to_json(workbook.Sheets[sheet_name_list[0]],{defval:"-"});
     const plan = sheet
     // const sheet = plan.toString()
 
@@ -83,6 +84,7 @@ class ArchivesRouter extends ModelRouter<Archive> {
       oneTitle = titles[i]
       headers.push(oneTitle)
     }
+   
 
     const starCurrent = await Doct.findOne({ _id: req.body.doct })
     const currentTime = Number(starCurrent.dcurrentValue)
@@ -111,9 +113,10 @@ class ArchivesRouter extends ModelRouter<Archive> {
     let colunLocation = indices.shift().toString()
 
     let idVo = ""
+    
    
     if ((headers.length - 1) !== lengthFields.length) {
-      // return next(new MethodNotAllowedError(`O DOCUMENTO POSSUI ${lengthFields.length} CAMPO(S) E SUA PLANILHA POSSUI ${headers.length - 1} COLUNA(S)!`))
+      //  return next(new MethodNotAllowedError(`O DOCUMENTO POSSUI ${lengthFields.length} CAMPO(S) E SUA PLANILHA POSSUI ${headers.length - 1} COLUNA(S)!`))
 
 
       const newNotification = {
@@ -236,11 +239,18 @@ class ArchivesRouter extends ModelRouter<Archive> {
             }]
 
             let dataSplit2 = d2.map(el => { return el.data2 }).toString()
+
+            if(dataSplit2==="-"){
+
+              typeError.push({ row: i + 1, msgError: "VERIFIQUE A CONFIGURAÇÃO DE TEMPORALIDADE DESSE DOCUMENTO!", tag: Object.values(xlData[i]).slice(1), location: xlData[i][colunLocation] })
+
+            }
             let patternDATAFULL = /^[0-9]{2}\/[0-9]{2}\/[0-9]{4}$/
             let patternCompt = /[0-9]{2}\/[0-9]{4}$/
             let patternYYYY = /[0-9]{4}$/
 
             if (patternDATAFULL.test(dataSplit2)) {
+              
               // console.log("a DAta "+dataSplit2+" está correta.")
               let d = dataSplit2.split("/")
 
@@ -601,7 +611,7 @@ class ArchivesRouter extends ModelRouter<Archive> {
       })
       await documentError.save()
 
-      let sheetErros = `/sheetarchives/excel/${documentError.id}`
+      let sheetErros = `http://localhost:3000/sheetarchives/excel/${documentError.id}`
 
       const newNotification = {
         title: "Importação de Arquivos com erros",
