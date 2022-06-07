@@ -240,16 +240,16 @@ class ArchivesRouter extends ModelRouter<Archive> {
 
             let dataSplit2 = d2.map(el => { return el.data2 }).toString()
 
-            if (dataSplit2=="-"){
+            if (dataSplit2 == "-") {
               typeError.push({ row: i + 1, msgError: "ESTE CAMPO DE POSSUIR UMA DATA VÁLIDA!!!!", tag: Object.values(xlData[i]).slice(1), location: xlData[i][colunLocation] })
 
             }
             let patternDATAFULL = /^[0-9]{2}\/[0-9]{2}\/[0-9]{4}$/
             let patternCompt = /[0-9]{2}\/[0-9]{4}$/
             let patternYYYY = /[0-9]{4}$/
-            
+
             if (patternDATAFULL.test(dataSplit2)) {
-              
+
               // console.log("a DAta "+dataSplit2+" está correta.")
               let d = dataSplit2.split("/")
 
@@ -323,18 +323,18 @@ class ArchivesRouter extends ModelRouter<Archive> {
             } else if (patternYYYY.test(dataSplit2)) {
 
 
-              if (dataSplit2.length>4){
+              if (dataSplit2.length > 4) {
                 typeError.push({ row: i + 1, msgError: "ESTE CAMPO DE POSSUIR UMA DATA VÁLIDA!!!!", tag: Object.values(xlData[i]).slice(1), location: xlData[i][colunLocation] })
-              }else{
+              } else {
                 let year = Number(dataSplit2)
                 let mounth = Number(12)
                 let day = Number(31)
                 let startDateCurrent = new Date(year, mounth - 1, day)
-  
+
                 let finalDateCurrent = new Date(year + currentTime, mounth - 1, day)
-  
+
                 let finalDateIntermediate = new Date(year + (currentTime + intermediateTime), mounth - 1, day)
-  
+
                 // console.log(" MMYYY Start current"+startDateCurrent+"finalDaeCurrent"+finalDateCurrent+"finalDate Intermediate"+ finalDateIntermediate)
                 let document = new Archive({
                   company: company,
@@ -352,17 +352,17 @@ class ArchivesRouter extends ModelRouter<Archive> {
                   finalDateCurrent: finalDateCurrent,
                   finalDateIntermediate: finalDateIntermediate,
                   finalFase: dfinal
-  
+
                 });
                 await document.save()
                   .then(await Volume.update({ _id: idVo.toString() }, { $set: { records: true } }))
                   .catch(next);
-  
+
                 setCronVolumes([idVo])
                 vol.push(document)
 
               }
-             
+
             } else {
               //aqui vai erros
               typeError.push({ row: i + 1, msgError: "VERIFIQUE A CONFIGURAÇÃO DE TEMPORALIDADE DESSE DOCUMENTO!", tag: Object.values(xlData[i]).slice(1), location: xlData[i][colunLocation] })
@@ -470,12 +470,12 @@ class ArchivesRouter extends ModelRouter<Archive> {
             let d2 = [{
               data2: (init[docItem])
             }]
-            
+
 
             let dataSplit2 = d2.map(el => { return el.data2 }).toString()
 
 
-            if (dataSplit2=="-"){
+            if (dataSplit2 == "-") {
               typeError.push({ row: i + 1, msgError: "ESTE CAMPO DE POSSUIR UMA DATA VÁLIDA!!!!", tag: Object.values(xlData[i]).slice(1), location: xlData[i][colunLocation] })
 
             }
@@ -558,47 +558,47 @@ class ArchivesRouter extends ModelRouter<Archive> {
               setCronVolumes([idVo])
               vol.push(document)
             } else if (patternYYYY.test(dataSplit2)) {
-              if (dataSplit2.length>4){
+              if (dataSplit2.length > 4) {
                 typeError.push({ row: i + 1, msgError: "ESTE CAMPO DE POSSUIR UMA DATA VÁLIDA!!!!", tag: Object.values(xlData[i]).slice(1), location: xlData[i][colunLocation] })
-              }else{
+              } else {
                 let d = dataSplit2
-              let year = Number(dataSplit2)
-              let mounth = Number(12)
-              let day = Number(31)
-              let startDateCurrent = new Date(year, mounth - 1, day)
+                let year = Number(dataSplit2)
+                let mounth = Number(12)
+                let day = Number(31)
+                let startDateCurrent = new Date(year, mounth - 1, day)
 
-              let finalDateCurrent = new Date(year + currentTime, mounth - 1, day)
+                let finalDateCurrent = new Date(year + currentTime, mounth - 1, day)
 
-              let finalDateIntermediate = new Date(year + (currentTime + intermediateTime), mounth - 1, day)
+                let finalDateIntermediate = new Date(year + (currentTime + intermediateTime), mounth - 1, day)
 
-              // console.log(" MMYYY Start current"+startDateCurrent+"finalDaeCurrent"+finalDateCurrent+"finalDate Intermediate"+ finalDateIntermediate)
-              let document = new Archive({
-                company: company,
-                departament: departament,
-                storehouse: storehouse,
-                volume: idVo,
-                doct: doct,
-                tag: Object.values(xlData[i]).slice(1),
-                author: id,
-                mailSignup: sponsor,
-                sponsor: idOfSponsor,
-                sheetImport: sheet,
-                //  create: dtaa,
-                startDateCurrent: startDateCurrent,
-                finalDateCurrent: finalDateCurrent,
-                finalDateIntermediate: finalDateIntermediate,
-                finalFase: dfinal
+                // console.log(" MMYYY Start current"+startDateCurrent+"finalDaeCurrent"+finalDateCurrent+"finalDate Intermediate"+ finalDateIntermediate)
+                let document = new Archive({
+                  company: company,
+                  departament: departament,
+                  storehouse: storehouse,
+                  volume: idVo,
+                  doct: doct,
+                  tag: Object.values(xlData[i]).slice(1),
+                  author: id,
+                  mailSignup: sponsor,
+                  sponsor: idOfSponsor,
+                  sheetImport: sheet,
+                  //  create: dtaa,
+                  startDateCurrent: startDateCurrent,
+                  finalDateCurrent: finalDateCurrent,
+                  finalDateIntermediate: finalDateIntermediate,
+                  finalFase: dfinal
 
-              });
-              await document.save()
-                .then(await Volume.update({ _id: idVo.toString() }, { $set: { records: true } }))
-                .catch(next);
+                });
+                await document.save()
+                  .then(await Volume.update({ _id: idVo.toString() }, { $set: { records: true } }))
+                  .catch(next);
 
-              setCronVolumes([idVo])
-              vol.push(document)
+                setCronVolumes([idVo])
+                vol.push(document)
 
               }
-              
+
             } else {
               //aqui vai erros
               typeError.push({ row: i + 1, msgError: "VERIFIQUE A CONFIGURAÇÃO DE TEMPORALIDADE DESSE DOCUMENTO!", tag: Object.values(xlData[i]).slice(1), location: xlData[i][colunLocation] })
@@ -652,7 +652,7 @@ class ArchivesRouter extends ModelRouter<Archive> {
       // await resp.send()
     }
     await resp.end()
-   
+
     // quantidades de colunas desconiderar a pmeiro sempre -1
   }
 
