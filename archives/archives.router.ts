@@ -4,7 +4,7 @@ import * as restify from "restify";
 import { ModelRouter } from "../common/model-router";
 import { MethodNotAllowedError, InvalidCredentialsError } from "restify-errors";
 import { mergePatchBodyParser } from "../server/merge-patch.parser";
-import 'moment/locale/pt-br';
+
 import xl = require('excel4node')
 var XLSX = require('xlsx')
 const bufferFrom = require('buffer-from')
@@ -59,7 +59,7 @@ class ArchivesRouter extends ModelRouter<Archive> {
 
 
     const { id, sponsor, company, departament, storehouse, doct, sheet, dataSeet } = req.body
-    let workbook = dataSeet    
+    let workbook = dataSeet
 
 
     const _idSponsor = await User.find({ email: sponsor })
@@ -68,11 +68,11 @@ class ArchivesRouter extends ModelRouter<Archive> {
     const Fields = await Doct.find({ "_id": doct })
     const lengthFields = Fields.map(el => { return el.label }).pop()
 
-    
+
     // let workbook = XLSX.readFile(req.files.uploaded_file.path);
     let sheet_name_list = workbook.SheetNames;
-  
-    let xlData = XLSX.utils.sheet_to_json(workbook.Sheets[sheet_name_list[0]],{defval:"-"});
+
+    let xlData = XLSX.utils.sheet_to_json(workbook.Sheets[sheet_name_list[0]], { defval: "-" });
     const plan = sheet
     // const sheet = plan.toString()
 
@@ -84,7 +84,7 @@ class ArchivesRouter extends ModelRouter<Archive> {
       oneTitle = titles[i]
       headers.push(oneTitle)
     }
-   
+
 
     const starCurrent = await Doct.findOne({ _id: req.body.doct })
     const currentTime = Number(starCurrent.dcurrentValue)
@@ -106,15 +106,15 @@ class ArchivesRouter extends ModelRouter<Archive> {
     const checkStore = stor.map(el => { return el.mapStorehouse }).pop()
     let typeError = []
 
-  
+
     let locationTitle = headers[0]
     let indices = [headers.toString().split(",")].pop()
     let coluns = indices.slice(1)
     let colunLocation = indices.shift().toString()
 
     let idVo = ""
-    
-   
+
+
     if ((headers.length - 1) !== lengthFields.length) {
       //  return next(new MethodNotAllowedError(`O DOCUMENTO POSSUI ${lengthFields.length} CAMPO(S) E SUA PLANILHA POSSUI ${headers.length - 1} COLUNA(S)!`))
 
@@ -135,15 +135,15 @@ class ArchivesRouter extends ModelRouter<Archive> {
 
 
     if (checkStore === true) {
-      
 
-      for (let i = 0; xlData.length > i; i++) {   
+
+      for (let i = 0; xlData.length > i; i++) {
         // console.log("estou aqui")     
 
         let controlPos = await Position.find({ storehouse: storehouse, position: { $eq: xlData[i][colunLocation] } })
         let idPosition = await controlPos.map(el => { return el._id }).toString()
         let checkPosition = await controlPos.map(el => { return el.used }).toString()
-       
+
         let vid = (await Volume.find({
           location: xlData[i][colunLocation],
           storehouse: storehouse,
@@ -154,9 +154,9 @@ class ArchivesRouter extends ModelRouter<Archive> {
           // sheetImport: sheet,
           status: "ATIVO",
         }))
-        .map(el => { return el._id }).toString()
-        
-        
+          .map(el => { return el._id }).toString()
+
+
         // console.log("só uma vez")
 
         if (vid) {
@@ -219,13 +219,13 @@ class ArchivesRouter extends ModelRouter<Archive> {
             });
             documentAr.save()
 
-          
+
               ///sinaliza se a caixa contem registros.
               .then(await Volume.update({ _id: idVo.toString() }, { $set: { records: true } }))
               .catch(next);
-            
-              setCronVolumes([idVo])
-            console.log("importados",i)
+
+            setCronVolumes([idVo])
+            console.log("importados", i)
 
             arr.push(-i.toString())
 
@@ -240,15 +240,14 @@ class ArchivesRouter extends ModelRouter<Archive> {
 
             let dataSplit2 = d2.map(el => { return el.data2 }).toString()
 
-            if(dataSplit2==="-"){
-
-              typeError.push({ row: i + 1, msgError: "VERIFIQUE A CONFIGURAÇÃO DE TEMPORALIDADE DESSE DOCUMENTO!", tag: Object.values(xlData[i]).slice(1), location: xlData[i][colunLocation] })
+            if (dataSplit2=="-"){
+              typeError.push({ row: i + 1, msgError: "ESTE CAMPO DE POSSUIR UMA DATA VÁLIDA!!!!", tag: Object.values(xlData[i]).slice(1), location: xlData[i][colunLocation] })
 
             }
             let patternDATAFULL = /^[0-9]{2}\/[0-9]{2}\/[0-9]{4}$/
             let patternCompt = /[0-9]{2}\/[0-9]{4}$/
             let patternYYYY = /[0-9]{4}$/
-
+            
             if (patternDATAFULL.test(dataSplit2)) {
               
               // console.log("a DAta "+dataSplit2+" está correta.")
@@ -284,11 +283,12 @@ class ArchivesRouter extends ModelRouter<Archive> {
 
                 .then(await Volume.update({ _id: idVo.toString() }, { $set: { records: true } }))
                 .catch(next);
-          
-                setCronVolumes([idVo])
+
+              setCronVolumes([idVo])
               vol.push(document)
 
             } else if (patternCompt.test(dataSplit2)) {
+              // console.log("competencia aqui")
               let ds = dataSplit2.split("/")
               let year = Number(ds[1])
               let mounth = Number(ds[0])
@@ -317,49 +317,56 @@ class ArchivesRouter extends ModelRouter<Archive> {
               await document.save()
                 .then(await Volume.update({ _id: idVo.toString() }, { $set: { records: true } }))
                 .catch(next);
-              
-                setCronVolumes([idVo])
+
+              setCronVolumes([idVo])
               vol.push(document)
             } else if (patternYYYY.test(dataSplit2)) {
 
-              let year = Number(dataSplit2)
-              let mounth = Number(12)
-              let day = Number(31)
-              let startDateCurrent = new Date(year, mounth - 1, day)
 
-              let finalDateCurrent = new Date(year + currentTime, mounth - 1, day)
-
-              let finalDateIntermediate = new Date(year + (currentTime + intermediateTime), mounth - 1, day)
-
-              // console.log(" MMYYY Start current"+startDateCurrent+"finalDaeCurrent"+finalDateCurrent+"finalDate Intermediate"+ finalDateIntermediate)
-              let document = new Archive({
-                company: company,
-                departament: departament,
-                storehouse: storehouse,
-                volume: idVo,
-                doct: doct,
-                tag: Object.values(xlData[i]).slice(1),
-                author: id,
-                mailSignup: sponsor,
-                sponsor: idOfSponsor,
-                sheetImport: sheet,
-                //  create: dtaa,
-                startDateCurrent: startDateCurrent,
-                finalDateCurrent: finalDateCurrent,
-                finalDateIntermediate: finalDateIntermediate,
-                finalFase: dfinal
-
-              });
-              await document.save()
-                .then(await Volume.update({ _id: idVo.toString() }, { $set: { records: true } }))
-                .catch(next);
-        
+              if (dataSplit2.length>4){
+                typeError.push({ row: i + 1, msgError: "ESTE CAMPO DE POSSUIR UMA DATA VÁLIDA!!!!", tag: Object.values(xlData[i]).slice(1), location: xlData[i][colunLocation] })
+              }else{
+                let year = Number(dataSplit2)
+                let mounth = Number(12)
+                let day = Number(31)
+                let startDateCurrent = new Date(year, mounth - 1, day)
+  
+                let finalDateCurrent = new Date(year + currentTime, mounth - 1, day)
+  
+                let finalDateIntermediate = new Date(year + (currentTime + intermediateTime), mounth - 1, day)
+  
+                // console.log(" MMYYY Start current"+startDateCurrent+"finalDaeCurrent"+finalDateCurrent+"finalDate Intermediate"+ finalDateIntermediate)
+                let document = new Archive({
+                  company: company,
+                  departament: departament,
+                  storehouse: storehouse,
+                  volume: idVo,
+                  doct: doct,
+                  tag: Object.values(xlData[i]).slice(1),
+                  author: id,
+                  mailSignup: sponsor,
+                  sponsor: idOfSponsor,
+                  sheetImport: sheet,
+                  //  create: dtaa,
+                  startDateCurrent: startDateCurrent,
+                  finalDateCurrent: finalDateCurrent,
+                  finalDateIntermediate: finalDateIntermediate,
+                  finalFase: dfinal
+  
+                });
+                await document.save()
+                  .then(await Volume.update({ _id: idVo.toString() }, { $set: { records: true } }))
+                  .catch(next);
+  
                 setCronVolumes([idVo])
-              vol.push(document)
+                vol.push(document)
+
+              }
+             
             } else {
               //aqui vai erros
               typeError.push({ row: i + 1, msgError: "VERIFIQUE A CONFIGURAÇÃO DE TEMPORALIDADE DESSE DOCUMENTO!", tag: Object.values(xlData[i]).slice(1), location: xlData[i][colunLocation] })
-              console.log("tem erros aqui")
+              // console.log("tem erros aqui")
             }
           }
         }
@@ -378,10 +385,10 @@ class ArchivesRouter extends ModelRouter<Archive> {
           volumeType: "BOX",
           guardType: "GERENCIADA",
           status: "ATIVO",
-        })).map(el => { return el._id }).toString()       
+        })).map(el => { return el._id }).toString()
 
         if (vid) {
-        
+
           idVo = vid
         } else {
           let documentVol = new Volume({
@@ -413,14 +420,14 @@ class ArchivesRouter extends ModelRouter<Archive> {
           if (v.length === 0) {
 
             await documentVol.save()
-   
+
             idVo = documentVol._id
 
 
           } else {
             typeError.push({ row: i + 1, msgError: "VERIFIQUE A POSIÇÃO JA ESTA EM USO!", tag: Object.values(xlData[i]).slice(1), location: xlData[i][colunLocation] })
             // catch(next)
-         
+
 
           }
 
@@ -450,8 +457,8 @@ class ArchivesRouter extends ModelRouter<Archive> {
 
               .then(await Volume.update({ _id: idVo.toString() }, { $set: { records: true } }))
               .catch(next);
-            
-              setCronVolumes([idVo])
+
+            setCronVolumes([idVo])
 
             arr.push(-i.toString())
 
@@ -463,15 +470,24 @@ class ArchivesRouter extends ModelRouter<Archive> {
             let d2 = [{
               data2: (init[docItem])
             }]
+            
 
             let dataSplit2 = d2.map(el => { return el.data2 }).toString()
+
+
+            if (dataSplit2=="-"){
+              typeError.push({ row: i + 1, msgError: "ESTE CAMPO DE POSSUIR UMA DATA VÁLIDA!!!!", tag: Object.values(xlData[i]).slice(1), location: xlData[i][colunLocation] })
+
+            }
             let patternDATAFULL = /^[0-9]{2}\/[0-9]{2}\/[0-9]{4}$/
             let patternCompt = /[0-9]{2}\/[0-9]{4}$/
             let patternYYYY = /[0-9]{4}$/
 
             if (patternDATAFULL.test(dataSplit2)) {
               // console.log("a DAta "+dataSplit2+" está correta.")
+              // console.log("estou aqui")
               let d = dataSplit2.split("/")
+              // let d =  moment(dataSplit2).format("DD/MM/YYYY").split("/")
 
               let year = Number(d[2])
               let mounth = Number(d[1])
@@ -503,12 +519,14 @@ class ArchivesRouter extends ModelRouter<Archive> {
                 .then(await Volume.update({ _id: idVo.toString() }, { $set: { records: true } }))
                 .catch(next);
 
-       
-                setCronVolumes([idVo])
+
+              setCronVolumes([idVo])
               vol.push(document)
 
             } else if (patternCompt.test(dataSplit2)) {
+              // console.log("estou 516")
               let ds = dataSplit2.split("/")
+              // let ds =  moment(dataSplit2).format("MM/YYYY").split("/")
               let year = Number(ds[1])
               let mounth = Number(ds[0])
               let startDateCurrent = new Date(year, mounth - 1, 1)
@@ -536,11 +554,14 @@ class ArchivesRouter extends ModelRouter<Archive> {
               await document.save()
                 .then(await Volume.update({ _id: idVo.toString() }, { $set: { records: true } }))
                 .catch(next);
-           
-                setCronVolumes([idVo])
+
+              setCronVolumes([idVo])
               vol.push(document)
             } else if (patternYYYY.test(dataSplit2)) {
-
+              if (dataSplit2.length>4){
+                typeError.push({ row: i + 1, msgError: "ESTE CAMPO DE POSSUIR UMA DATA VÁLIDA!!!!", tag: Object.values(xlData[i]).slice(1), location: xlData[i][colunLocation] })
+              }else{
+                let d = dataSplit2
               let year = Number(dataSplit2)
               let mounth = Number(12)
               let day = Number(31)
@@ -572,9 +593,12 @@ class ArchivesRouter extends ModelRouter<Archive> {
               await document.save()
                 .then(await Volume.update({ _id: idVo.toString() }, { $set: { records: true } }))
                 .catch(next);
-          
-                setCronVolumes([idVo])
+
+              setCronVolumes([idVo])
               vol.push(document)
+
+              }
+              
             } else {
               //aqui vai erros
               typeError.push({ row: i + 1, msgError: "VERIFIQUE A CONFIGURAÇÃO DE TEMPORALIDADE DESSE DOCUMENTO!", tag: Object.values(xlData[i]).slice(1), location: xlData[i][colunLocation] })
@@ -611,11 +635,11 @@ class ArchivesRouter extends ModelRouter<Archive> {
       })
       await documentError.save()
 
-      let sheetErros = `http://localhost:3000/sheetarchives/excel/${documentError.id}`
+      let sheetErros = `https://localhost:3000/sheetarchives/excel/${documentError.id}`
 
       const newNotification = {
         title: "Importação de Arquivos com erros",
-        msg: `Foram importados ${xlData.length -typeError.length} Arquivos com Suscesso, e não Importados ${typeError.length} Aquivos!`,
+        msg: `Foram importados ${xlData.length - typeError.length} Arquivos com Suscesso, e não Importados ${typeError.length} Aquivos!`,
         linkIcon: iconerror,
         attachment: sheetErros,
         user: id,
@@ -625,9 +649,10 @@ class ArchivesRouter extends ModelRouter<Archive> {
       }
       db.ref('notifications').push(newNotification)
         .catch(next)
-      resp.send()
+      // await resp.send()
     }
-    next
+    await resp.end()
+   
     // quantidades de colunas desconiderar a pmeiro sempre -1
   }
 
