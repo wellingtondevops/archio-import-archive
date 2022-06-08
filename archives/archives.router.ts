@@ -635,7 +635,7 @@ class ArchivesRouter extends ModelRouter<Archive> {
       })
       await documentError.save()
 
-      let sheetErros = `https://localhost:3000/sheetarchives/excel/${documentError.id}`
+      let sheetErros = `http://localhost:3000/sheetarchives/excel/${documentError.id}`
 
       const newNotification = {
         title: "Importação de Arquivos com erros",
