@@ -67,6 +67,7 @@ class ArchivesRouter extends ModelRouter<Archive> {
     const idOfSponsor = idSponsor.toString()
     const Fields = await Doct.find({ "_id": doct })
     const lengthFields = Fields.map(el => { return el.label }).pop()
+    let retroOrPresent = false
 
 
     // let workbook = XLSX.readFile(req.files.uploaded_file.path);
@@ -100,22 +101,38 @@ class ArchivesRouter extends ModelRouter<Archive> {
     let arr = []
     let vol = []
     let err = []
+    let columnDataRetro =undefined
     const u = await User.find({ _id: id })
     const username = u.map(el => { return el.name })
     const stor = await Storehouse.find({ _id: storehouse })
     const checkStore = stor.map(el => { return el.mapStorehouse }).pop()
     let typeError = []
+    let sizeArray =1
+    let sizeSlice =1
 
-
+   
     let locationTitle = headers[0]
     let indices = [headers.toString().split(",")].pop()
-    let coluns = indices.slice(1)
+    let indicesRetro = [headers[1].toString().split(",")].pop()
+    let coluns = indices.slice(sizeSlice)
     let colunLocation = indices.shift().toString()
+
+    if (retroOrPresent){
+      columnDataRetro = indicesRetro.shift().toString()
+      sizeArray =2
+      sizeSlice=2
+
+
+    }
+  console.log(columnDataRetro)
+    
+
+  
 
     let idVo = ""
 
 
-    if ((headers.length - 1) !== lengthFields.length) {
+    if (headers.length - sizeArray !== lengthFields.length) {
       //  return next(new MethodNotAllowedError(`O DOCUMENTO POSSUI ${lengthFields.length} CAMPO(S) E SUA PLANILHA POSSUI ${headers.length - 1} COLUNA(S)!`))
 
 
@@ -176,7 +193,7 @@ class ArchivesRouter extends ModelRouter<Archive> {
             departament: departament,
             author: id,
             mailSignup: sponsor,
-            dateCreated: Date.now(),
+            dateCreated:xlData[i][columnDataRetro]==undefined ? Date.now():moment(new Date(xlData[i][columnDataRetro].toString())).format("DD/MM/YYYY"),
             sheetImport: sheet,
             doct: doct,
             records: false
@@ -191,11 +208,11 @@ class ArchivesRouter extends ModelRouter<Archive> {
               await Position.update({ _id: idPosition }, { $set: { used: true, company: company, departament: departament } })
                 .catch(next)
             } else {
-              typeError.push({ row: i + 1, msgError: "VERIFIQUE A POSIÇÃO, JÁ PODE ESTA EM USO POR OUTRO DEPARTAMENTO OU EMPRESA!", tag: Object.values(xlData[i]).slice(1), location: xlData[i][colunLocation] })
+              typeError.push({ row: i + 1, msgError: "VERIFIQUE A POSIÇÃO, JÁ PODE ESTA EM USO POR OUTRO DEPARTAMENTO OU EMPRESA!", tag: Object.values(xlData[i]).slice(sizeSlice), location: xlData[i][colunLocation] })
 
             }
           } else {
-            typeError.push({ row: i + 1, msgError: "VERIFIQUE A POSIÇÃO, NÃO ENCONTRADA NO MAPA OU ATUALIZE O MAPA!", tag: Object.values(xlData[i]).slice(1), location: xlData[i][colunLocation] })
+            typeError.push({ row: i + 1, msgError: "VERIFIQUE A POSIÇÃO, NÃO ENCONTRADA NO MAPA OU ATUALIZE O MAPA!", tag: Object.values(xlData[i]).slice(sizeSlice), location: xlData[i][colunLocation] })
 
           }
         }
@@ -210,10 +227,11 @@ class ArchivesRouter extends ModelRouter<Archive> {
               storehouse: storehouse,
               volume: idVo,
               doct: doct,
-              tag: Object.values(xlData[i]).slice(1),
+              tag: Object.values(xlData[i]).slice(sizeSlice),
               author: id,
               mailSignup: sponsor,
               sponsor: idOfSponsor,
+              create:xlData[i][columnDataRetro]==undefined ? Date.now():moment(new Date(xlData[i][columnDataRetro].toString())).format("DD/MM/YYYY"),
               sheetImport: sheet
 
             });
@@ -231,7 +249,7 @@ class ArchivesRouter extends ModelRouter<Archive> {
 
           } else {
             //com data
-            let tg = Object.values(xlData[i]).slice(1)
+            let tg = Object.values(xlData[i]).slice(sizeSlice)
             let init = tg
             //PROCURA A DATA DENTRO DO TEXTO PELA POSIÇÃO DO LABEL DO INDICE
             let d2 = [{
@@ -241,7 +259,7 @@ class ArchivesRouter extends ModelRouter<Archive> {
             let dataSplit2 = d2.map(el => { return el.data2 }).toString()
 
             if (dataSplit2 == "-") {
-              typeError.push({ row: i + 1, msgError: "ESTE CAMPO DE POSSUIR UMA DATA VÁLIDA!!!!", tag: Object.values(xlData[i]).slice(1), location: xlData[i][colunLocation] })
+              typeError.push({ row: i + 1, msgError: "ESTE CAMPO DE POSSUIR UMA DATA VÁLIDA!!!!", tag: Object.values(xlData[i]).slice(sizeSlice), location: xlData[i][colunLocation] })
 
             }
             let patternDATAFULL = /^[0-9]{2}\/[0-9]{2}\/[0-9]{4}$/
@@ -267,12 +285,12 @@ class ArchivesRouter extends ModelRouter<Archive> {
                 storehouse: storehouse,
                 volume: idVo,
                 doct: doct,
-                tag: Object.values(xlData[i]).slice(1),
+                tag: Object.values(xlData[i]).slice(sizeSlice),
                 author: id,
                 mailSignup: sponsor,
                 sponsor: idOfSponsor,
                 sheetImport: sheet,
-                //  create: dtaa,
+                create: xlData[i][columnDataRetro]==undefined ? Date.now():moment(new Date(xlData[i][columnDataRetro].toString())).format("DD/MM/YYYY"),
                 startDateCurrent: startDateCurrent,
                 finalDateCurrent: finalDateCurrent,
                 finalDateIntermediate: finalDateIntermediate,
@@ -302,12 +320,12 @@ class ArchivesRouter extends ModelRouter<Archive> {
                 storehouse: storehouse,
                 volume: idVo,
                 doct: doct,
-                tag: Object.values(xlData[i]).slice(1),
+                tag: Object.values(xlData[i]).slice(sizeSlice),
                 author: id,
                 mailSignup: sponsor,
                 sponsor: idOfSponsor,
                 sheetImport: sheet,
-                //  create: dtaa,
+                 create: xlData[i][columnDataRetro]==undefined ? Date.now():moment(new Date(xlData[i][columnDataRetro].toString())).format("DD/MM/YYYY"),
                 startDateCurrent: startDateCurrent,
                 finalDateCurrent: finalDateCurrent,
                 finalDateIntermediate: finalDateIntermediate,
@@ -324,7 +342,7 @@ class ArchivesRouter extends ModelRouter<Archive> {
 
 
               if (dataSplit2.length > 4) {
-                typeError.push({ row: i + 1, msgError: "ESTE CAMPO DE POSSUIR UMA DATA VÁLIDA!!!!", tag: Object.values(xlData[i]).slice(1), location: xlData[i][colunLocation] })
+                typeError.push({ row: i + 1, msgError: "ESTE CAMPO DE POSSUIR UMA DATA VÁLIDA!!!!", tag: Object.values(xlData[i]).slice(sizeSlice), location: xlData[i][colunLocation] })
               } else {
                 let year = Number(dataSplit2)
                 let mounth = Number(12)
@@ -342,12 +360,12 @@ class ArchivesRouter extends ModelRouter<Archive> {
                   storehouse: storehouse,
                   volume: idVo,
                   doct: doct,
-                  tag: Object.values(xlData[i]).slice(1),
+                  tag: Object.values(xlData[i]).slice(sizeSlice),
                   author: id,
                   mailSignup: sponsor,
                   sponsor: idOfSponsor,
                   sheetImport: sheet,
-                  //  create: dtaa,
+                  create: xlData[i][columnDataRetro]==undefined ? Date.now():moment(new Date(xlData[i][columnDataRetro].toString())).format("DD/MM/YYYY"),
                   startDateCurrent: startDateCurrent,
                   finalDateCurrent: finalDateCurrent,
                   finalDateIntermediate: finalDateIntermediate,
@@ -365,7 +383,7 @@ class ArchivesRouter extends ModelRouter<Archive> {
 
             } else {
               //aqui vai erros
-              typeError.push({ row: i + 1, msgError: "VERIFIQUE A CONFIGURAÇÃO DE TEMPORALIDADE DESSE DOCUMENTO!", tag: Object.values(xlData[i]).slice(1), location: xlData[i][colunLocation] })
+              typeError.push({ row: i + 1, msgError: "VERIFIQUE A CONFIGURAÇÃO DE TEMPORALIDADE DESSE DOCUMENTO!", tag: Object.values(xlData[i]).slice(sizeSlice), location: xlData[i][colunLocation] })
               // console.log("tem erros aqui")
             }
           }
@@ -374,6 +392,11 @@ class ArchivesRouter extends ModelRouter<Archive> {
     } else {
 
       for (let i = 0; xlData.length > i; i++) {
+        console.log("estou aqui")
+
+   
+        console.log("caixa",xlData[i][columnDataRetro])
+       
 
         // console.log("bora indexar")
 
@@ -385,6 +408,7 @@ class ArchivesRouter extends ModelRouter<Archive> {
           volumeType: "BOX",
           guardType: "GERENCIADA",
           status: "ATIVO",
+          // dateCreated:xlData[i][columnDataRetro]==undefined ? Date.now():moment(new Date(xlData[i][columnDataRetro].toString())).format("DD/MM/YYYY"),
         })).map(el => { return el._id }).toString()
 
         if (vid) {
@@ -402,7 +426,7 @@ class ArchivesRouter extends ModelRouter<Archive> {
             departament: departament,
             author: id,
             mailSignup: sponsor,
-            dateCreated: Date.now(),
+            dateCreated:xlData[i][columnDataRetro]==undefined ? Date.now():moment(new Date(xlData[i][columnDataRetro].toString())).format("DD/MM/YYYY"),
             sheetImport: sheet,
             doct: doct,
             records: false
@@ -425,7 +449,7 @@ class ArchivesRouter extends ModelRouter<Archive> {
 
 
           } else {
-            typeError.push({ row: i + 1, msgError: "VERIFIQUE A POSIÇÃO JA ESTA EM USO!", tag: Object.values(xlData[i]).slice(1), location: xlData[i][colunLocation] })
+            typeError.push({ row: i + 1, msgError: "VERIFIQUE A POSIÇÃO JA ESTA EM USO!", tag: Object.values(xlData[i]).slice(sizeSlice), location: xlData[i][colunLocation] })
             // catch(next)
 
 
@@ -439,6 +463,7 @@ class ArchivesRouter extends ModelRouter<Archive> {
 
 
         } else {
+          console.log(Object.values(xlData[i]).slice(sizeSlice),)
           if (docItem === -1) {
             const documentAr = new Archive({
               company: company,
@@ -446,11 +471,12 @@ class ArchivesRouter extends ModelRouter<Archive> {
               storehouse: storehouse,
               volume: idVo,
               doct: doct,
-              tag: Object.values(xlData[i]).slice(1),
+              tag: Object.values(xlData[i]).slice(sizeSlice),
               author: id,
               mailSignup: sponsor,
               sponsor: idOfSponsor,
-              sheetImport: sheet
+              sheetImport: sheet,
+              create: xlData[i][columnDataRetro]==undefined ? Date.now():moment(new Date(xlData[i][columnDataRetro].toString())).format("DD/MM/YYYY"),
 
             });
             documentAr.save()
@@ -464,7 +490,7 @@ class ArchivesRouter extends ModelRouter<Archive> {
 
           } else {
             //com data
-            let tg = Object.values(xlData[i]).slice(1)
+            let tg = Object.values(xlData[i]).slice(sizeSlice)
             let init = tg
             //PROCURA A DATA DENTRO DO TEXTO PELA POSIÇÃO DO LABEL DO INDICE
             let d2 = [{
@@ -476,7 +502,7 @@ class ArchivesRouter extends ModelRouter<Archive> {
 
 
             if (dataSplit2 == "-") {
-              typeError.push({ row: i + 1, msgError: "ESTE CAMPO DE POSSUIR UMA DATA VÁLIDA!!!!", tag: Object.values(xlData[i]).slice(1), location: xlData[i][colunLocation] })
+              typeError.push({ row: i + 1, msgError: "ESTE CAMPO DE POSSUIR UMA DATA VÁLIDA!!!!", tag: Object.values(xlData[i]).slice(sizeSlice), location: xlData[i][colunLocation] })
 
             }
             let patternDATAFULL = /^[0-9]{2}\/[0-9]{2}\/[0-9]{4}$/
@@ -503,12 +529,12 @@ class ArchivesRouter extends ModelRouter<Archive> {
                 storehouse: storehouse,
                 volume: idVo,
                 doct: doct,
-                tag: Object.values(xlData[i]).slice(1),
+                tag: Object.values(xlData[i]).slice(sizeSlice),
                 author: id,
                 mailSignup: sponsor,
                 sponsor: idOfSponsor,
                 sheetImport: sheet,
-                //  create: dtaa,
+                create: xlData[i][columnDataRetro]==undefined ? Date.now():moment(new Date(xlData[i][columnDataRetro].toString())).format("DD/MM/YYYY"),
                 startDateCurrent: startDateCurrent,
                 finalDateCurrent: finalDateCurrent,
                 finalDateIntermediate: finalDateIntermediate,
@@ -539,12 +565,12 @@ class ArchivesRouter extends ModelRouter<Archive> {
                 storehouse: storehouse,
                 volume: idVo,
                 doct: doct,
-                tag: Object.values(xlData[i]).slice(1),
+                tag: Object.values(xlData[i]).slice(sizeSlice),
                 author: id,
                 mailSignup: sponsor,
                 sponsor: idOfSponsor,
                 sheetImport: sheet,
-                //  create: dtaa,
+                create: xlData[i][columnDataRetro]==undefined ? Date.now():moment(new Date(xlData[i][columnDataRetro].toString())).format("DD/MM/YYYY"),
                 startDateCurrent: startDateCurrent,
                 finalDateCurrent: finalDateCurrent,
                 finalDateIntermediate: finalDateIntermediate,
@@ -559,7 +585,7 @@ class ArchivesRouter extends ModelRouter<Archive> {
               vol.push(document)
             } else if (patternYYYY.test(dataSplit2)) {
               if (dataSplit2.length > 4) {
-                typeError.push({ row: i + 1, msgError: "ESTE CAMPO DE POSSUIR UMA DATA VÁLIDA!!!!", tag: Object.values(xlData[i]).slice(1), location: xlData[i][colunLocation] })
+                typeError.push({ row: i + 1, msgError: "ESTE CAMPO DE POSSUIR UMA DATA VÁLIDA!!!!", tag: Object.values(xlData[i]).slice(sizeSlice), location: xlData[i][colunLocation] })
               } else {
                 let d = dataSplit2
                 let year = Number(dataSplit2)
@@ -578,12 +604,12 @@ class ArchivesRouter extends ModelRouter<Archive> {
                   storehouse: storehouse,
                   volume: idVo,
                   doct: doct,
-                  tag: Object.values(xlData[i]).slice(1),
+                  tag: Object.values(xlData[i]).slice(sizeSlice),
                   author: id,
                   mailSignup: sponsor,
                   sponsor: idOfSponsor,
                   sheetImport: sheet,
-                  //  create: dtaa,
+                  create: xlData[i][columnDataRetro]==undefined ? Date.now():moment(new Date(xlData[i][columnDataRetro].toString())).format("DD/MM/YYYY"),
                   startDateCurrent: startDateCurrent,
                   finalDateCurrent: finalDateCurrent,
                   finalDateIntermediate: finalDateIntermediate,
@@ -601,7 +627,7 @@ class ArchivesRouter extends ModelRouter<Archive> {
 
             } else {
               //aqui vai erros
-              typeError.push({ row: i + 1, msgError: "VERIFIQUE A CONFIGURAÇÃO DE TEMPORALIDADE DESSE DOCUMENTO!", tag: Object.values(xlData[i]).slice(1), location: xlData[i][colunLocation] })
+              typeError.push({ row: i + 1, msgError: "VERIFIQUE A CONFIGURAÇÃO DE TEMPORALIDADE DESSE DOCUMENTO!", tag: Object.values(xlData[i]).slice(sizeSlice), location: xlData[i][colunLocation] })
 
             }
           }
