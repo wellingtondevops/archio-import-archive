@@ -25,7 +25,7 @@ amqp.connect(connectionAmqp,(err,connection)=>{
             
             
             let receive =JSON.parse(msg.content.toString())
-            const {id,sponsor,company,doct,departament,storehouse,sheet,dataSeet} = receive
+            const {id,sponsor,company,doct,departament,storehouse,retroDate,sheet,dataSeet} = receive
                  
              axios({
                 method: 'post',
@@ -39,6 +39,7 @@ amqp.connect(connectionAmqp,(err,connection)=>{
                   departament:departament,
                   storehouse:storehouse,                  
                   sheet:sheet,
+                  retroDate:retroDate,
                   dataSeet:dataSeet
                 }
               })
