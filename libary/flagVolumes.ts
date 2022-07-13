@@ -8,7 +8,7 @@ const  setCronVolumes=async (volumes)=>{
       for (const item of volumes) {
         
            await  Volume.updateOne({_id:item},
-            {$set:{cron:true}}
+            {$set:{cron:true,cronDate:true}}
             )
 
       }

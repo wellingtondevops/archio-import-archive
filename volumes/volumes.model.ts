@@ -259,6 +259,16 @@ const volSchema = new mongoose.Schema({
     cron:{
         type:Boolean,
         default:true
+    },
+    cronDate:{
+        type:Boolean,
+        default:true
+    },
+    smallestYear:{
+        type:String
+    },
+    biggestYear:{
+        type:String
     }
 
 
