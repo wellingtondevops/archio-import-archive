@@ -116,6 +116,10 @@ const docSchema = new mongoose.Schema({
             required:false
           
         }
+    },
+    currentControl:{
+        type:Boolean,
+        default:false
     }
 })
 

@@ -3,13 +3,15 @@
 export const environment = {
 
 
-    server: { port: process.env.SERVER_PORT || 3005 },
+    server: { port: process.env.SERVER_PORT || 3005},
     //db: {url: process.env.DB_URL || 'mongodb://earchivedb:$enh434rch1v3@ds119755.mlab.com:19755/earchive'},
-    urlamqp: { amqpurl: process.env.AMQP_URL || "amqp://archio:archio@rabbitmq" },
+    
+     urlamqp: { amqpurl: process.env.AMQP_URL || "amqp://archio:archio@rabbitmq"},  
+    //  urlamqp: { amqpurl: process.env.AMQP_URL || "amqp://archio:archio@localhost:5672"},  
 
     //novo banco
     db: { url: process.env.DB_URL || "mongodb://earchiveTester:cdh0tAYUFJXDMB3t@cluster0-shard-00-00-rr6sx.mongodb.net:27017/earchive?ssl=true&replicaSet=Cluster0-shard-0&authSource=admin" },
-    urImport: { url: process.env.IMPORT_URL || "http://localhost:3005/archives/import" },
+    urImport: { url: process.env.IMPORT_URL || "http://localhost:3005/archives/import"},
 
 
 
@@ -63,8 +65,8 @@ export const environment = {
 
     },
     icons:{
-        iconerror: process.env.ICONERROR||"https://storage.googleapis.com/archiobucket/ARCHIOFILES/icons/errors.png",
-        iconsuscess: process.env.ICONSUSCESS ||"https://storage.googleapis.com/archiobucket/ARCHIOFILES/icons/sucess.png"
+        iconerror: process.env.ICONERROR||"fa fa-exclamation-triangle fa-2x",
+        iconsuscess: process.env.ICONSUSCESS ||"fa fa-check-square fa-2x"
     }
 
 

@@ -21,11 +21,12 @@ export interface SealRef extends mongoose.Document {
 
 export interface Volume extends mongoose.Document {
 
+
+
     location: string,
     //description: string,    
     volumeType: string,
     guardType: string,
-
     status: string,
     storehouse: mongoose.Types.ObjectId | Storehouse,
     uniqueField: string
@@ -36,6 +37,12 @@ export interface Volume extends mongoose.Document {
     listSeal: SealRef[],
     reference: String,
     seal: String,
+    closeBox:Boolean
+    totalPages: Number
+    totalArchives: Number
+    lastUpdateVolume:Date
+    cron: boolean
+
     
    
 
@@ -135,7 +142,7 @@ const volSchema = new mongoose.Schema({
     },
     dateCreated: {
         type: Date,
-        default: Date.now
+       
     },
 
     author: {
@@ -224,8 +231,47 @@ const volSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Doct',
     
+    },
+    pending:{
+        type: Boolean,
+        default: false
+    },
+    idemail:{
+        type: mongoose.Schema.Types.ObjectId,
+        ref:'Email'
+    },
+    closeBox:{
+        type:Boolean,
+        default:false
+    },
+    totalPages:{
+        type:Number,
+        default:0
+    },
+    totalArchives:{
+        type:Number,
+        default:0
+    },
+    lastUpdateVolume:{
+        type:Date,
+        default:Date.now()
+    },
+    cron:{
+        type:Boolean,
+        default:true
+    },
+    cronDate:{
+        type:Boolean,
+        default:true
+    },
+    smallestYear:{
+        type:String
+    },
+    biggestYear:{
+        type:String
     }
+
+
     
 })
-
 export const Volume = mongoose.model<Volume>('Volume', volSchema)

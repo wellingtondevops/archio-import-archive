@@ -12,5 +12,5 @@ RUN npm install
 
 COPY ./dist .
 
-EXPOSE 3002
+EXPOSE 3005
 CMD ["pm2-docker", "ecosystem.config.js"]
