@@ -7,7 +7,7 @@ import { Doct} from '../docts/docts.model'
 const amqp = require('amqplib/callback_api')
 const axios = require('axios')
 import { environment } from '../common/environment'
-const connectionAmqp = environment.urlamqp.amqpurl
+
 
 
 

@@ -1,4 +1,5 @@
 import * as mongoose from 'mongoose'
+import { Company } from '../companies/companies.model'
 
 
 export interface LabelField extends mongoose.Document {
@@ -9,12 +10,18 @@ export interface LabelField extends mongoose.Document {
 }
 
 export interface Doct extends mongoose.Document {
+    company: mongoose.Types.ObjectId  | Company,
     destFinal: any
-    dfinal: any
-    dcurrentValue(arg0: string, dcurrentValue: any)
-    dintermediateValue(dintermediateValue: any)
+    dfinal: string
+    dcurrentValue: number
+    dintermediateValue: number
+    
     name: string,    
     label: LabelField[]
+    cron:boolean
+    activePackage:boolean
+    ocr:boolean
+    signature:boolean
 }
 
 const labSchema = new mongoose.Schema({
@@ -36,7 +43,8 @@ const labSchema = new mongoose.Schema({
     timeControl:{
         type:Boolean,
         default:false
-    }
+    },
+ 
     
 })
 
@@ -120,7 +128,21 @@ const docSchema = new mongoose.Schema({
     currentControl:{
         type:Boolean,
         default:false
+    },
+    cron:
+    {
+        type: Boolean,
+        default:false
+    },
+    ocr:{
+        type:Boolean,
+        default:false
+    },
+    signature:{
+        type:Boolean,
+     
     }
+
 })
 
 

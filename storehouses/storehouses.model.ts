@@ -4,6 +4,7 @@ import * as mongoose from 'mongoose'
 export interface Storehouse extends mongoose.Document{
     mapStorehouse: any
     name: string   
+    virtualHd:boolean
     
 }
 
@@ -30,6 +31,10 @@ const storeSchema = new mongoose.Schema({
         trim: true
     },
     mapStorehouse:{
+        type:Boolean,
+        default:false
+    },
+    virtualHd:{
         type:Boolean,
         default:false
     },

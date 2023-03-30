@@ -2,7 +2,9 @@
 import { Server } from './server/server'
 
 
-import { archivesRouter } from './archives/archives.router'
+
+import { consumer} from './queues/consumer'
+
 import { notifierRouter } from './notifiers/notifiers.router'
 import { mainRouter } from './main.router'
 import {sheetarchivesRouter} from './sheetarchives/sheetarchives.router'
@@ -11,10 +13,11 @@ import { environment } from './common/environment'
 
 const server = new Server()
 server.bootstrap([
-  archivesRouter,       
+       
   sheetarchivesRouter, 
   notifierRouter,
-  mainRouter
+  mainRouter,
+  consumer
 
 ]).then(server => {
   

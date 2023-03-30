@@ -1,16 +1,16 @@
-FROM node:10
+FROM --platform=linux/amd64 node:11.15
 
 WORKDIR  /usr/src/app
 
-RUN npm i install pm2 -g  && npm i install pm2 -g
-
 COPY package*.json ./
-
-COPY ecosystem.config.js ./
 
 RUN npm install
 
 COPY ./dist .
 
 EXPOSE 3005
-CMD ["pm2-docker", "ecosystem.config.js"]
+
+
+
+CMD ["node", "main.js"]
+
