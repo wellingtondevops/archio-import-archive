@@ -3,7 +3,7 @@
 export const environment = {
 
 
-    server: { port: process.env.SERVER_PORT || 3005 },
+    server: { port: process.env.SERVER_PORT || 1001 },
     queues: {
         processOCR: process.env.PROCESS_OCR || "PROCESS-OCR",
         processSignature: process.env.PROCESS_SIGNATURE || "PROCESS-SIGNATURE",
@@ -14,6 +14,7 @@ export const environment = {
         mscalculateItensInVolume: process.env.MS_CALCULATE_ITENS_IN_VOLUME || "MS_CALCULATE_ITENS_IN_VOLUME",
         msAddVolumesInDocumentsPerDate: process.env.ADD_VOLUMES_IN_DOCUMENTS_PER_DATE || "MS-ADD-VOLUMES-IN-DOCUMENTS-PER-DATE",
         msImportArchives: process.env.MS_IMPORT_ARCHVES || "MS-IMPORT-ARCHIVES"
+
     },
     ampqkluster: process.env.KULSTER_QUEUES || "amqps://xdcjhjem:K_71cgMgEGZh-Yr0yqWQg8sUAIFRAeoh@kebnekaise.lmq.cloudamqp.com/xdcjhjem",
     emailservice: {
@@ -69,6 +70,9 @@ export const environment = {
     icons: {
         iconerror: process.env.ICONERROR || "fa fa-exclamation-triangle fa-2x",
         iconsuscess: process.env.ICONSUSCESS || "fa fa-check-square fa-2x"
+    },
+    urls:{
+        printErrorArchioves:process.env.PRINT_ERROR_ARCHIVES ||"https://archiomainprod.archio.com.br",
     }
 
 

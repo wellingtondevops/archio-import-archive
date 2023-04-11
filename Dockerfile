@@ -8,7 +8,7 @@ RUN npm install
 
 COPY ./dist .
 
-EXPOSE 3005
+EXPOSE 1001
 
 
 
