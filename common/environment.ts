@@ -16,7 +16,7 @@ export const environment = {
         msImportArchives: process.env.MS_IMPORT_ARCHVES || "MS-IMPORT-ARCHIVES"
 
     },
-    ampqkluster: process.env.KULSTER_QUEUES || "amqps://xdcjhjem:K_71cgMgEGZh-Yr0yqWQg8sUAIFRAeoh@kebnekaise.lmq.cloudamqp.com/xdcjhjem",
+    ampqkluster: process.env.AMPQ_QUEUE || "amqps://xdcjhjem:K_71cgMgEGZh-Yr0yqWQg8sUAIFRAeoh@kebnekaise.lmq.cloudamqp.com/xdcjhjem",
     emailservice: {
         url: process.env.EMAIL_SERVICE || "https://apidev.archio.com.br/users"
     },

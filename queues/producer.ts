@@ -16,7 +16,7 @@ const sendQueusCalculateItens = async (data) => {
   
         const connection = await ampq.connect(connectionAmqp)
         const channel = await connection.createChannel()
-        await channel.assertQueue(queue, { durable: true })
+        await channel.assertQueue(queue)
         await channel.sendToQueue(queue, Buffer.from(JSON.stringify(data)))
         await channel.close()
         await connection.close()
@@ -29,7 +29,7 @@ const sendQueusCalculateItens = async (data) => {
   
           const connection = await ampq.connect(connectionAmqp)
           const channel = await connection.createChannel()
-          await channel.assertQueue(queue, { durable: true })
+          await channel.assertQueue(queue)
           await channel.sendToQueue(queue, Buffer.from(JSON.stringify(data)))
           await channel.close()
           await connection.close()
@@ -57,7 +57,7 @@ const sendQueuesVolumeRetention = async (dataSend) => {
 
             const connection = await ampq.connect(connectionAmqp)
             const channel = await connection.createChannel()
-            await channel.assertQueue(queue, { durable: true })
+            await channel.assertQueue(queue,{durable:false})
             await channel.sendToQueue(queue, Buffer.from(JSON.stringify(dataSend)))
             console.log("[x]..Send message for queue:", queue)
             await channel.close()
@@ -68,7 +68,7 @@ const sendQueuesVolumeRetention = async (dataSend) => {
             try {
                 const connection = await ampq.connect(connectionAmqp)
                 const channel = await connection.createChannel()
-                await channel.assertQueue(queue, { durable: true })
+                await channel.assertQueue(queue,{durable:false})
                 await channel.sendToQueue(queue, Buffer.from(JSON.stringify(dataSend)))
                 console.log("[x]..Send message for queue:", queue)
                 await channel.close()

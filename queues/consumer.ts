@@ -31,7 +31,7 @@ export class Consumer extends ModelRouter<Volume> {
           throw error;
 
         channel.prefetch(1);
-        channel.assertQueue(queue, { durable: true });
+        channel.assertQueue(queue, { durable: false });
         
 
         channel.consume(queue, async (msg) => {

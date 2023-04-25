@@ -64,6 +64,22 @@ const importArchives = async (data) => {
     const _idSponsor = await User.find({ email: sponsor })
     let idSponsor = await _idSponsor.map(el => { return el._id })
     const idOfSponsor = idSponsor.toString()
+
+    if (storehouse===undefined || doct===undefined || departament===undefined || company===undefined) {
+
+        const newNotification = {
+            title: "Importação de Arquivos",
+            msg: `DADOS INCORRETOS POR FAVOR VERIFIQUEM OS DADOS DE IMPORTAÇÃO`,
+            linkIcon: iconsuscess,
+            user: id,
+            mailSignup: sponsor,
+            active: true,
+            dateCreated: Date.now()
+        }
+        db.ref('notifications').push(newNotification)
+            .catch((e) => console.error(e))
+
+    }
     const { dintermediateValue, dcurrentValue, dfinal, label } = await Doct.findOne({ _id: doct })
     const indexOfTemporality = label.findIndex((label, index, array) => label.timeControl === true)// retorno da posição na qual o timeControl está ativo.
     const dataStorehouse = await Storehouse.find({ _id: storehouse })
@@ -73,6 +89,8 @@ const importArchives = async (data) => {
     let retroOrPresent = false
     let sheet_name_list = workbook.SheetNames;
     const xlData = XLSX.utils.sheet_to_json(await workbook.Sheets[sheet_name_list[0]], { defval: "-" })
+
+   
 
 
 
@@ -172,7 +190,20 @@ const importArchives = async (data) => {
 
                 let creaDate = new Date()
 
+
+                const validateData = await validateDate(xlData[i][columnDataRetro])
+
+                if (validateData.error === true) {
+
+                    typeError.push({ row: i + 1, msgError: "FORMATO DA DATA DE ENTRADA NÃO É VÁLIDA!!!!", tag: Object.values(xlData[i]).slice(sizeSlice), location: xlData[i][colunLocation] })
+                    
+
+                }
+
                 if (xlData[i][columnDataRetro] !== undefined) {
+
+                   
+
 
                     let nDATE = xlData[i][columnDataRetro].toString().split("/")
 
@@ -387,7 +418,7 @@ const importArchives = async (data) => {
             }
             // status de importacao futuro
             let updateMssg = {
-                title: `IMPORTACAO EM ANDAMENTO....FIQUE TRANQUILO`,
+                title: `IMPORTACAO EM ANDAMENTO....`,
                 msg: `LENDO A LINHA ${i}.`,
                 linkIcon: iconsuscess,
                 user: 'upload-' + id.toString(),
