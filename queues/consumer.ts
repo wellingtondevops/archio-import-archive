@@ -7,7 +7,7 @@ import { importArchives } from '../archives/archives';
 
 
 
-const connectionAmqp = environment.ampqkluster
+const connectionAmqp = environment.rabbitmql.urlRabbitmq
 const amqp = require("amqplib/callback_api");
 
 const queue = environment.queues.msImportArchives
@@ -31,7 +31,7 @@ export class Consumer extends ModelRouter<Volume> {
           throw error;
 
         channel.prefetch(1);
-        channel.assertQueue(queue, { durable: false });
+        channel.assertQueue(queue, { durable: true });
         
 
         channel.consume(queue, async (msg) => {

@@ -5,31 +5,22 @@ export const environment = {
 
     server: { port: process.env.SERVER_PORT || 1001 },
     queues: {
-        processOCR: process.env.PROCESS_OCR || "PROCESS-OCR",
-        processSignature: process.env.PROCESS_SIGNATURE || "PROCESS-SIGNATURE",
+        
         msVolumeRetentionDate: process.env.MS_VOLUME_RETENTION_DATE || "MS-VOLUME-RETENTION-DATE",
-        msCalculateTemporalyt: process.env.MS_VOLUME_RETENTION_DATE || "MS-VOLUME-RETENTION-DATE",
-        mscalculateTemporalityPerCompany: process.env.MS_CALCULATE_TEMPORALITY_PER_COMPANY || "MS-CALCULATE-TEMPORALITY-PER-COMPANY",
-        mscalculateTemporalityArchives: process.env.MS_CALCULATE_TEMPOLALITY_ARCHIVES || "MS_CALCULATE_TEMPOLALITY_ARCHIVES",
         mscalculateItensInVolume: process.env.MS_CALCULATE_ITENS_IN_VOLUME || "MS_CALCULATE_ITENS_IN_VOLUME",
-        msAddVolumesInDocumentsPerDate: process.env.ADD_VOLUMES_IN_DOCUMENTS_PER_DATE || "MS-ADD-VOLUMES-IN-DOCUMENTS-PER-DATE",
         msImportArchives: process.env.MS_IMPORT_ARCHVES || "MS-IMPORT-ARCHIVES"
 
     },
-    ampqkluster: process.env.AMPQ_QUEUE || "amqps://xdcjhjem:K_71cgMgEGZh-Yr0yqWQg8sUAIFRAeoh@kebnekaise.lmq.cloudamqp.com/xdcjhjem",
+    rabbitmql: { 
+        urlRabbitmq: process.env.RABBITMQ_CONNECTION_URL || "amqp://archio:archio@localhost:5672" 
+    },
     emailservice: {
         url: process.env.EMAIL_SERVICE || "https://apidev.archio.com.br/users"
     },
     db: {
         url: process.env.MONGO_ACESS || "mongodb://earchiveTester:cdh0tAYUFJXDMB3t@cluster0-shard-00-00-rr6sx.mongodb.net:27017/earchive?ssl=true&replicaSet=Cluster0-shard-0&authSource=admin"
     },
-    email: {
-        
-        sendgridkey: process.env.SEND_MAIL || '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',
-        template: process.env.EMAIL_TMPL || 'Seja bem vindo ao Archio <strong>{0}</strong>!<br><br>Seu usuário para acesso é <strong>{1}</strong>, e sua senha : <strong>{2}</strong><br><br>O endereço de acesso é <strong>https://archio.com.br/login</strong><br><br><br><br>Atenciosamente,<br><br>Equipe Smartscan. ',
-        forgot: process.env.EMAIL_TMPL || '<strong>Sua nova Senha é: {2}</strong>',
-
-    },
+   
     security:
     {
         saltRounds: process.env.SALT_ROUNDS || 10,

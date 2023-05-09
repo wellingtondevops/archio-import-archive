@@ -9,11 +9,14 @@ import { setCronVolumes } from "../libary/flagVolumes";
 import { Volume } from "../volumes/volumes.model";
 import { Archive } from "./archives.model";
 import { Position } from "../positions/positions.model";
-import { sendQueusCalculateItens, sendQueuesVolumeRetention } from "../queues/producer";
+import { producerMessage } from "../queues/producer";
 import { validateDate } from "../pipes/validateDate";
 import { calcTemporality } from "../pipes/calcTemporality";
 const XLSX = require('xlsx')
 const admin = require('firebase-admin')
+const QUEUE_VOLUME_RETENTIONS = environment.queues.msVolumeRetentionDate
+const QUEUE_VOLUME_CALCULATE_ITENS = environment.queues.msVolumeRetentionDate
+
 
 
 admin.initializeApp({
@@ -65,7 +68,7 @@ const importArchives = async (data) => {
     let idSponsor = await _idSponsor.map(el => { return el._id })
     const idOfSponsor = idSponsor.toString()
 
-    if (storehouse===undefined || doct===undefined || departament===undefined || company===undefined) {
+    if (storehouse === undefined || doct === undefined || departament === undefined || company === undefined) {
 
         const newNotification = {
             title: "Importação de Arquivos",
@@ -90,7 +93,7 @@ const importArchives = async (data) => {
     let sheet_name_list = workbook.SheetNames;
     const xlData = XLSX.utils.sheet_to_json(await workbook.Sheets[sheet_name_list[0]], { defval: "-" })
 
-   
+
 
 
 
@@ -196,13 +199,13 @@ const importArchives = async (data) => {
                 if (validateData.error === true) {
 
                     typeError.push({ row: i + 1, msgError: "FORMATO DA DATA DE ENTRADA NÃO É VÁLIDA!!!!", tag: Object.values(xlData[i]).slice(sizeSlice), location: xlData[i][colunLocation] })
-                    
+
 
                 }
 
                 if (xlData[i][columnDataRetro] !== undefined) {
 
-                   
+
 
 
                     let nDATE = xlData[i][columnDataRetro].toString().split("/")
@@ -289,7 +292,7 @@ const importArchives = async (data) => {
                         .then(await Volume.update({ _id: idVo.toString() }, { $set: { records: true } }))
                         .catch((e) => console.error(e))
 
-                    
+
 
                     const dataSend = {
                         volume: idVo,
@@ -301,7 +304,8 @@ const importArchives = async (data) => {
 
                     }
                     if (flagStorehouse != true) {
-                        sendQueusCalculateItens(dataSend)
+
+                        producerMessage(dataSend, QUEUE_VOLUME_CALCULATE_ITENS)
                     }
 
                     arr.push(-i.toString())
@@ -309,7 +313,7 @@ const importArchives = async (data) => {
                 } else {
 
                     let tg = Object.values(xlData[i]).slice(sizeSlice)
-                    
+
                     let init = tg
 
                     let d2 = [{
@@ -383,7 +387,9 @@ const importArchives = async (data) => {
                                 .catch((e) => console.error(e))
 
                             if (flagStorehouse != true) {
-                                sendQueuesVolumeRetention(dataSend)
+
+                                producerMessage(dataSend, QUEUE_VOLUME_RETENTIONS)
+
                             }
 
                             vol.push(document)
@@ -562,7 +568,8 @@ const importArchives = async (data) => {
                         .then(await Volume.update({ _id: idVo.toString() }, { $set: { records: true } }))
                         .then(() => {
                             if (flagStorehouse != true) {
-                                sendQueusCalculateItens(dataSend)
+
+                                producerMessage(dataSend, QUEUE_VOLUME_CALCULATE_ITENS)
                             }
                         })
                         .catch((e) => console.error(e))
@@ -645,7 +652,8 @@ const importArchives = async (data) => {
                                 .catch((e) => console.error(e))
 
                             if (flagStorehouse != true) {
-                                sendQueuesVolumeRetention(dataSend)
+
+                                producerMessage(dataSend, QUEUE_VOLUME_RETENTIONS)
                             }
 
 
